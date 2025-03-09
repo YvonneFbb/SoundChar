@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  src: url('/fonts/JetBrainsMono-Regular.woff2') format('woff2');
+}
+
+
+html,
+body {
+  font-family: 'JetBrains Mono', monospace;
+  overflow: hidden;
+  height: 100%;
+}
+
+/* Webkit 浏览器滚动条样式 */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 7px;
+  /* 垂直滚动条宽度 */
+  height: 7px;
+  /* 水平滚动条高度 */
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f6c7ac;
+  /* 滚动条轨道颜色 */
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #0c75ff;
+  /* 滚动条滑块颜色 */
+  border-radius: 5px;
+}
+
+.clip-triangle-left {
+  clip-path: polygon(0 50%, 100% 0, 100% 100%);
+}
+
+.clip-triangle-right {
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+}
