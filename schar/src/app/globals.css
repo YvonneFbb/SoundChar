@@ -36,10 +36,17 @@ body {
   border-radius: 5px;
 }
 
-.clip-triangle-left {
-  clip-path: polygon(0 50%, 100% 0, 100% 100%);
-}
-
-.clip-triangle-right {
-  clip-path: polygon(0 0, 100% 50%, 0 100%);
+.custom-bg::before {
+  content: '';
+  position: absolute;
+  background: #f6c7ac;
+  height: 70%;
+  /* 通过这个值控制背景高度 */
+  top: 50%;
+  left: -0rem;
+  /* 补偿 padding */
+  right: -0rem;
+  transform: translateY(-50%);
+  border-radius: 9999px;
+  z-index: 0;
 }

@@ -34,8 +34,14 @@ class Sampler {
     await this.p5.userStartAudio()
     await navigator.mediaDevices.getUserMedia({ audio: true })
     this.mic.start(() => {
-      this.mic.amp(1)
+      this.mic.amp(0.8)
     })
+  }
+
+  async stop () {
+    await this.p5.userStartAudio()
+    await navigator.mediaDevices.getUserMedia({ audio: true })
+    this.mic.stop()
   }
 
   sample () {
@@ -60,52 +66,81 @@ const CharType = {
 }
 
 class CharCompo {
-  constructor (points, mapfunc, type) {
+  constructor (points, mapfunc, type, size) {
+    let s = size[0] >= size[1] ? size[0] : size[1]
+    for (let i = 0; i < points.length; i++) {
+      points[i][0] /= s
+      points[i][1] /= s
+    }
+
     this.points = points
     this.mapfunc = mapfunc
     this.type = type
+    this.size = [size[0] / s, size[1] / s]
   }
 
-  draw (p5Inst, wCenter, hCenter, loudness, centroid) {
+  draw (p5Inst, loudness, centroid) {
     const { weight, smooth } = this.mapfunc(p5Inst, loudness, centroid)
+    let s =
+      this.size[0] >= this.size[1] * 0.8
+        ? p5Inst.width * 0.3
+        : p5Inst.height * 0.3
+    let points = this.points.map(p => {
+      return [p[0] * s, p[1] * s]
+    })
 
     switch (this.type) {
       case CharType.BLOCK_W:
         p5Inst.fill(0)
         p5Inst.rect(
-          this.points[0][0] + wCenter - 168,
-          this.points[0][1] + hCenter - 200,
-          this.points[1][0] - this.points[0][0] + weight,
-          this.points[1][1] - this.points[0][1]
+          points[0][0] + p5Inst.width * 0.5 - this.size[0] * s * 0.5 - 10,
+          points[0][1] + p5Inst.height * 0.42 - this.size[1] * s * 0.5,
+          points[1][0] - points[0][0] + weight,
+          points[1][1] - points[0][1]
         )
         break
       case CharType.BLOCK_H:
         p5Inst.fill(0)
         p5Inst.rect(
-          this.points[0][0] + wCenter - 168,
-          this.points[0][1] + hCenter - 200,
-          this.points[1][0] - this.points[0][0],
-          this.points[1][1] - this.points[0][1] + weight
+          points[0][0] + p5Inst.width * 0.5 - this.size[0] * s * 0.5 - 10,
+          points[0][1] + p5Inst.height * 0.42 - this.size[1] * s * 0.5,
+          points[1][0] - points[0][0],
+          points[1][1] - points[0][1] + weight
         )
         break
     }
   }
 }
 
-const LRControlButtons = ({ value, onIncrement, onDecrement }) => (
+const LRControlButtons = ({ onIncrement, onDecrement }) => (
   <div>
-    <div className='absolute top-1/2 left-1/4 -translate-x-1/2 -translate-y-1/2 flex z-10'>
-      <button
-        onClick={onDecrement}
-        className='w-8 h-8 clip-triangle-left hover:bg-blue-600 bg-[#0c75ff]'
-      />
+    <div className='absolute top-1/2 left-32 -translate-x-1/2 -translate-y-1/2 z-10'>
+      <button onClick={onDecrement}>
+        <svg width='40' height='40' viewBox='0 0 100 100'>
+          {/* 这里的三角形顶点在 (20,50) 为指向左边，
+              另外两个点在 (80,20) 和 (80,80)，构成一个较为接近正三角形的形状 */}
+          <polygon
+            points='20,50 80,20 80,80'
+            fill='#0c75ff'
+            stroke='black'
+            strokeWidth='3'
+          />
+        </svg>
+      </button>
     </div>
-
-    <div className='absolute top-1/2 right-1/4 -translate-x-1/2 -translate-y-1/2 flex z-10'>
-      <button
-        onClick={onIncrement}
-        className='w-8 h-8 clip-triangle-right hover:bg-blue-600 bg-[#0c75ff]'
-      />
+    <div className='absolute top-1/2 right-32 -translate-x-1/2 -translate-y-1/2 z-10'>
+      <button onClick={onIncrement}>
+        <svg width='40' height='40' viewBox='0 0 100 100'>
+          {/* 这里的三角形顶点在 (80,50) 为指向右边，
+              另外两个点在 (20,20) 和 (20,80) */}
+          <polygon
+            points='80,50 20,20 20,80'
+            fill='#0c75ff'
+            stroke='black'
+            strokeWidth='3'
+          />
+        </svg>
+      </button>
     </div>
   </div>
 )
@@ -162,14 +197,8 @@ const MySketch = ({ className }) => {
     const data = samplerRef.current?.sample(p5Inst)
     if (!data) return
 
-    qiData.forEach(char => {
-      char.draw(
-        p5Inst,
-        p5Inst.width / 2,
-        p5Inst.height / 2,
-        data.loudness,
-        data.centroid
-      )
+    charData[globalIntRef.current].forEach(char => {
+      char.draw(p5Inst, data.loudness, data.centroid)
     })
   }
 
@@ -177,9 +206,12 @@ const MySketch = ({ className }) => {
     <div ref={containerRef} className={`relative h-full w-full ${className}`}>
       {!isLoading && (
         <LRControlButtons
-          value={globalInt}
-          onIncrement={() => setGlobalInt(prev => prev + 1)}
-          onDecrement={() => setGlobalInt(prev => prev - 1)}
+          onIncrement={() =>
+            setGlobalInt(prev =>
+              prev >= charData.length - 1 ? prev : prev + 1
+            )
+          }
+          onDecrement={() => setGlobalInt(prev => (prev < 1 ? prev : prev - 1))}
         />
       )}
 
@@ -189,15 +221,22 @@ const MySketch = ({ className }) => {
         </div>
       )}
 
-      {!isLoading && !audioAllowed && (
+      {!isLoading && (
         <button
           className='absolute bottom-1/4 left-1/2 -translate-x-1/2 flex gap-8 z-10'
           onClick={async () => {
-            await samplerRef.current?.enable()
-            setAudioAllowed(true)
+            if (!audioAllowed) {
+              // 如果音频未开启，则启动音频
+              await samplerRef.current?.enable()
+              setAudioAllowed(true)
+            } else {
+              // 如果音频已开启，则暂停/停止麦克风输入
+              samplerRef.current?.mic.stop()
+              setAudioAllowed(false)
+            }
           }}
         >
-          START
+          {audioAllowed ? 'PAUSE' : 'START'}
         </button>
       )}
 
@@ -209,64 +248,75 @@ const MySketch = ({ className }) => {
 let qiData = [
   new CharCompo(
     [
-      [99.2074, 85.0394],
-      [99.2074, 141.732]
+      [0, 0],
+      [0, 56]
     ],
     (p5Inst, loudness, centroid) => {
-      let w = p5Inst.map(centroid, 0, 8000, 10, 30)
+      let w = p5Inst.map(centroid, 0, 8000, 10, 80)
 
       return {
         weight: w,
         smooth: 3
       }
     },
-    CharType.BLOCK_W
+    CharType.BLOCK_W,
+    [140, 140]
   ),
   new CharCompo(
     [
-      [99.2074, 141.732],
-      [240.02, 141.732]
+      [0, 56],
+      [140, 56]
     ],
     (p5Inst, loudness, centroid) => {
-      let w = p5Inst.map(loudness, 0, 150, 2, 20)
+      let w
+      if (loudness < 60) {
+        w = p5Inst.map(loudness, 0, 60, 10, 20)
+      } else {
+        w = p5Inst.map(loudness, 60, 180, 20, 1)
+      }
 
       return {
         weight: w,
         smooth: 3
       }
     },
-    CharType.BLOCK_H
+    CharType.BLOCK_H,
+    [140, 140]
   ),
   new CharCompo(
     [
-      [99.2074, 184.252],
-      [241.869, 184.252]
+      [0, 98],
+      [140, 98]
     ],
     (p5Inst, loudness, centroid) => {
-      let w = p5Inst.map(loudness, 0, 150, 2, 20)
+      let w = p5Inst.map(loudness, 0, 150, 10, 60)
 
       return {
         weight: w,
         smooth: 3
       }
     },
-    CharType.BLOCK_H
+    CharType.BLOCK_H,
+    [140, 140]
   ),
   new CharCompo(
     [
-      [99.2074, 226.771],
-      [240.95, 226.771]
+      [0, 140],
+      [140, 140]
     ],
     (p5Inst, loudness, centroid) => {
-      let w = p5Inst.map(loudness, 0, 150, 2, 20)
+      let w = p5Inst.map(loudness, 0, 150, 10, 15)
 
       return {
         weight: w,
         smooth: 3
       }
     },
-    CharType.BLOCK_H
+    CharType.BLOCK_H,
+    [140, 140]
   )
 ]
+
+let charData = [qiData]
 
 export default MySketch
