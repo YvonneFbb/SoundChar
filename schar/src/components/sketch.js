@@ -1,23 +1,26 @@
 'use client'
 
 import React, { useRef, useState, useEffect } from 'react'
-import p5 from 'p5'
 import dynamic from 'next/dynamic'
 
 const Sketch = dynamic(
   () =>
     import('react-p5').then(mod => {
-      require('p5/lib/addons/p5.sound')
+      if (typeof window !== 'undefined' && !window.p5SoundLoaded) {
+        require('p5/lib/addons/p5.sound')
+        window.p5SoundLoaded = true // 标记只加载一次
+      }
       return mod.default
     }),
   { ssr: false }
 )
 
 class Sampler {
-  constructor (sampleInterval = 300) {
+  constructor (p5Inst, sampleInterval = 300) {
     this.mic = new window.p5.AudioIn()
     this.fft = new window.p5.FFT(0.8, 64)
     this.fft.setInput(this.mic)
+    this.p5 = p5Inst
 
     this.sampleInterval = sampleInterval
     this.lastSampleTime = 0
@@ -25,19 +28,18 @@ class Sampler {
     this.centroid = 0
     this.gate = 50
     this.active = false
-
-    this.mic.start(() => {
-      this.mic.amp(0)
-    })
   }
 
   async enable () {
+    await this.p5.userStartAudio()
     await navigator.mediaDevices.getUserMedia({ audio: true })
-    this.mic.amp(1)
+    this.mic.start(() => {
+      this.mic.amp(1)
+    })
   }
 
-  sample (p5Inst) {
-    const currentTime = p5Inst.millis()
+  sample () {
+    const currentTime = this.p5.millis()
     if (currentTime - this.lastSampleTime >= this.sampleInterval) {
       this.lastSampleTime = currentTime
       const spectrum = this.fft.analyze()
@@ -64,15 +66,15 @@ class CharCompo {
     this.type = type
   }
 
-  draw (p5Inst, center, loudness, centroid) {
+  draw (p5Inst, wCenter, hCenter, loudness, centroid) {
     const { weight, smooth } = this.mapfunc(p5Inst, loudness, centroid)
 
     switch (this.type) {
       case CharType.BLOCK_W:
         p5Inst.fill(0)
         p5Inst.rect(
-          this.points[0][0] + center,
-          this.points[0][1] + center / 2,
+          this.points[0][0] + wCenter - 200,
+          this.points[0][1] + hCenter - 200,
           this.points[1][0] - this.points[0][0] + weight,
           this.points[1][1] - this.points[0][1]
         )
@@ -80,8 +82,8 @@ class CharCompo {
       case CharType.BLOCK_H:
         p5Inst.fill(0)
         p5Inst.rect(
-          this.points[0][0] + center,
-          this.points[0][1] + center / 2,
+          this.points[0][0] + wCenter - 200,
+          this.points[0][1] + hCenter - 200,
           this.points[1][0] - this.points[0][0],
           this.points[1][1] - this.points[0][1] + weight
         )
@@ -116,13 +118,12 @@ const MySketch = ({ className }) => {
   const globalIntRef = useRef(globalInt)
 
   const containerRef = useRef(null)
-  const [canvasSize, setCanvasSize] = useState(800)
+  const [canvasSize, setCanvasSize] = useState([800, 800])
   const canvasSizeRef = useRef(canvasSize)
 
   const handleResize = () => {
-    // const { width, height } = containerRef.current.getBoundingClientRect()
-    // setCanvasSize(Math.min(width, height))
-    setCanvasSize(800)
+    const { width, height } = containerRef.current.getBoundingClientRect()
+    setCanvasSize([width, height])
   }
 
   useEffect(() => {
@@ -132,40 +133,48 @@ const MySketch = ({ className }) => {
     canvasSizeRef.current = canvasSize
   }, [canvasSize])
 
+  useEffect(() => {
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
   const setup = (p5Inst, canvasParentRef) => {
     const canvas = p5Inst.createCanvas(
       canvasSizeRef.current,
       canvasSizeRef.current
     )
     canvas.parent(canvasParentRef)
-    samplerRef.current = new Sampler(10)
+    samplerRef.current = new Sampler(p5Inst, 10)
     setIsLoading(false)
 
-    window.addEventListener('resize', handleResize)
+    p5Inst.getAudioContext().suspend()
   }
 
   const draw = p5Inst => {
-    if (p5Inst.width !== canvasSizeRef.current) {
-      p5Inst.resizeCanvas(canvasSizeRef.current, canvasSizeRef.current)
+    if (
+      p5Inst.width !== canvasSizeRef.current[0] ||
+      p5Inst.height !== canvasSizeRef.current[1]
+    ) {
+      p5Inst.resizeCanvas(canvasSizeRef.current[0], canvasSizeRef.current[1])
     }
     p5Inst.background(255)
     const data = samplerRef.current?.sample(p5Inst)
     if (!data) return
 
     qiData.forEach(char => {
-      char.draw(p5Inst, p5Inst.width / 2, data.loudness, data.centroid)
+      char.draw(
+        p5Inst,
+        p5Inst.width / 2,
+        p5Inst.height / 2,
+        data.loudness,
+        data.centroid
+      )
     })
   }
 
-  // 清理音频资源
-  useEffect(() => {
-    return () => {
-      samplerRef.current?.mic.dispose()
-    }
-  }, [])
-
   return (
-    <div ref={containerRef} className={`relative ${className}`}>
+    <div ref={containerRef} className={`relative h-full w-full ${className}`}>
       {!isLoading && (
         <LRControlButtons
           value={globalInt}
