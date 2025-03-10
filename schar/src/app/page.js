@@ -42,26 +42,26 @@ export default function Home () {
               <em className='text-[#adadad]'>
                 This is a step-by-step operation guide and notes:
               </em>
-              <ul className='list-disc pl-6 space-y-2 max-w-2xl mx-auto'>
-                <br />
-                <li>
-                  Step 1: Click the Start button and tell the computer any sound
-                  you want to make
-                </li>
-                <li>
-                  Step 2: Select the Bezier curve adjustment axis to adjust the
-                  symbol to be straight or round
-                </li>
-                <li>
-                  Step 3: You can select the switch button to switch between
-                  different symbols for interaction
-                </li>
-                <li>
-                  Note: You can choose to press the Pause button to stop the
-                  interaction
-                </li>
-              </ul>
             </p>
+            <ul className='list-disc pl-6 space-y-2 max-w-2xl mx-auto'>
+              <br />
+              <li>
+                Step 1: Click the Start button and tell the computer any sound
+                you want to make
+              </li>
+              <li>
+                Step 2: Select the Bezier curve adjustment axis to adjust the
+                symbol to be straight or round
+              </li>
+              <li>
+                Step 3: You can select the switch button to switch between
+                different symbols for interaction
+              </li>
+              <li>
+                Note: You can choose to press the Pause button to stop the
+                interaction
+              </li>
+            </ul>
             <h2 className='custom-bg relative font-bold text-center inline-block rounded-full px-2 mt-4'>
               <span className='relative z-10'>Innovation</span>
             </h2>
@@ -76,24 +76,24 @@ export default function Home () {
                 propose a symbol visualization method based on phonological
                 features.
               </em>
-              <ul className='list-disc pl-6 space-y-2 max-w-2xl mx-auto'>
-                <br />
-                <li>
-                  A method of "shape, meaning and sound" reconstruction is
-                  proposed to achieve multimodal fusion of Chinese characters.
-                </li>
-                <li>
-                  Construct a "shape, meaning and sound" digital symbol library
-                  and explore real-time symbol generation based on
-                  parameterization.
-                </li>
-                <li>
-                  Explore the mapping relationship between sound and graphic
-                  symbols, and propose a symbol visualization method based on
-                  phonological features.
-                </li>
-              </ul>
             </p>
+            <ul className='list-disc pl-6 space-y-2 max-w-2xl mx-auto'>
+              <br />
+              <li>
+                A method of "shape, meaning and sound" reconstruction is
+                proposed to achieve multimodal fusion of Chinese characters.
+              </li>
+              <li>
+                Construct a "shape, meaning and sound" digital symbol library
+                and explore real-time symbol generation based on
+                parameterization.
+              </li>
+              <li>
+                Explore the mapping relationship between sound and graphic
+                symbols, and propose a symbol visualization method based on
+                phonological features.
+              </li>
+            </ul>
           </article>
         </div>
 

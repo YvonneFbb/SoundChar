@@ -7,7 +7,9 @@ const Sketch = dynamic(
   () =>
     import('react-p5').then(mod => {
       if (typeof window !== 'undefined' && !window.p5SoundLoaded) {
-        require('p5/lib/addons/p5.sound')
+        require('../../public/p5.sound.min')
+        require('../../public/p5.bezier.min')
+
         window.p5SoundLoaded = true // 标记只加载一次
       }
       return mod.default
@@ -223,7 +225,7 @@ const MySketch = ({ className }) => {
 
       {!isLoading && (
         <button
-          className='absolute bottom-1/4 left-1/2 -translate-x-1/2 flex gap-8 z-10'
+          className='absolute text-xl font-bold bottom-1/4 left-1/2 -translate-x-1/2 flex gap-8 z-10'
           onClick={async () => {
             if (!audioAllowed) {
               // 如果音频未开启，则启动音频
