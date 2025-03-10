@@ -50,3 +50,7 @@ body {
   border-radius: 9999px;
   z-index: 0;
 }
+
+.song-font {
+  font-family: 'SimSun', '宋体', serif;
+}

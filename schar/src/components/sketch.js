@@ -1,14 +1,14 @@
 'use client'
 
 import React, { useRef, useState, useEffect } from 'react'
+import initBezier from 'p5bezier'
 import dynamic from 'next/dynamic'
 
 const Sketch = dynamic(
   () =>
     import('react-p5').then(mod => {
       if (typeof window !== 'undefined' && !window.p5SoundLoaded) {
-        require('../../public/p5.sound.min')
-        require('../../public/p5.bezier.min')
+        require('p5/lib/addons/p5.sound.min')
 
         window.p5SoundLoaded = true // 标记只加载一次
       }
@@ -62,9 +62,9 @@ class Sampler {
 }
 
 const CharType = {
-  BLOCK_W: 'BLOCK_W',
-  BLOCK_H: 'BLOCK_H',
-  BEZIER: 'BEZIER'
+  BLOCK_W: 0,
+  BLOCK_H: 1,
+  BEZIER: 2
 }
 
 class CharCompo {
@@ -81,7 +81,7 @@ class CharCompo {
     this.size = [size[0] / s, size[1] / s]
   }
 
-  draw (p5Inst, loudness, centroid) {
+  draw (p5Inst, p5bezier, loudness, centroid) {
     const { weight, smooth } = this.mapfunc(p5Inst, loudness, centroid)
     let s =
       this.size[0] >= this.size[1] * 0.8
@@ -91,24 +91,47 @@ class CharCompo {
       return [p[0] * s, p[1] * s]
     })
 
+    for (let i = 0; i < points.length; i++) {
+      points[i][0] += p5Inst.width * 0.5 - this.size[0] * s * 0.5
+      points[i][1] += p5Inst.height * 0.42 - this.size[1] * s * 0.5
+      // p5Inst.ellipse(points[i][0], points[i][1], 10)
+    }
+
     switch (this.type) {
       case CharType.BLOCK_W:
         p5Inst.fill(0)
+        p5Inst.strokeWeight(1)
         p5Inst.rect(
-          points[0][0] + p5Inst.width * 0.5 - this.size[0] * s * 0.5 - 10,
-          points[0][1] + p5Inst.height * 0.42 - this.size[1] * s * 0.5,
+          points[0][0],
+          points[0][1],
           points[1][0] - points[0][0] + weight,
           points[1][1] - points[0][1]
         )
         break
       case CharType.BLOCK_H:
         p5Inst.fill(0)
+        p5Inst.strokeWeight(1)
         p5Inst.rect(
-          points[0][0] + p5Inst.width * 0.5 - this.size[0] * s * 0.5 - 10,
-          points[0][1] + p5Inst.height * 0.42 - this.size[1] * s * 0.5,
+          points[0][0],
+          points[0][1],
           points[1][0] - points[0][0],
           points[1][1] - points[0][1] + weight
         )
+        break
+      case CharType.BEZIER:
+        p5Inst.noFill(0)
+        p5Inst.stroke(0)
+        p5Inst.strokeWeight(weight)
+        p5Inst.beginShape()
+        p5Inst.curveVertex(points[0][0], points[0][1])
+        for (let i = 0; i < points.length; i++) {
+          p5Inst.curveVertex(points[i][0], points[i][1])
+        }
+        p5Inst.curveVertex(
+          points[points.length - 1][0],
+          points[points.length - 1][1]
+        )
+        p5Inst.endShape()
         break
     }
   }
@@ -151,11 +174,12 @@ const MySketch = ({ className }) => {
   const [globalInt, setGlobalInt] = useState(0)
   const [audioAllowed, setAudioAllowed] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
-  const samplerRef = useRef()
-  const globalIntRef = useRef(globalInt)
-
-  const containerRef = useRef(null)
   const [canvasSize, setCanvasSize] = useState([800, 800])
+
+  const samplerRef = useRef()
+  const p5bezierRef = useRef()
+  const globalIntRef = useRef(globalInt)
+  const containerRef = useRef(null)
   const canvasSizeRef = useRef(canvasSize)
 
   const handleResize = () => {
@@ -177,12 +201,11 @@ const MySketch = ({ className }) => {
   }, [])
 
   const setup = (p5Inst, canvasParentRef) => {
-    const canvas = p5Inst.createCanvas(
-      canvasSizeRef.current,
-      canvasSizeRef.current
-    )
-    canvas.parent(canvasParentRef)
+    const canvas = p5Inst
+      .createCanvas(canvasSizeRef.current, canvasSizeRef.current)
+      .parent(canvasParentRef)
     samplerRef.current = new Sampler(p5Inst, 10)
+    // p5bezierRef.current = initBezier(canvas)
     setIsLoading(false)
 
     p5Inst.getAudioContext().suspend()
@@ -199,8 +222,8 @@ const MySketch = ({ className }) => {
     const data = samplerRef.current?.sample(p5Inst)
     if (!data) return
 
-    charData[globalIntRef.current].forEach(char => {
-      char.draw(p5Inst, data.loudness, data.centroid)
+    charData[globalIntRef.current][1].forEach(char => {
+      char.draw(p5Inst, p5bezierRef.current, data.loudness, data.centroid)
     })
   }
 
@@ -208,11 +231,12 @@ const MySketch = ({ className }) => {
     <div ref={containerRef} className={`relative h-full w-full ${className}`}>
       {!isLoading && (
         <LRControlButtons
-          onIncrement={() =>
+          onIncrement={() => {
             setGlobalInt(prev =>
               prev >= charData.length - 1 ? prev : prev + 1
             )
-          }
+            console.log(globalInt)
+          }}
           onDecrement={() => setGlobalInt(prev => (prev < 1 ? prev : prev - 1))}
         />
       )}
@@ -221,6 +245,12 @@ const MySketch = ({ className }) => {
         <div className='inset-0 bg-gray-100 flex items-center justify-center'>
           Loading audio...
         </div>
+      )}
+
+      {!isLoading && (
+        <p className='absolute text-2xl font-bold top-20 left-1/2 -translate-x-1/2 z-10 song-font'>
+          {charData[globalInt][0]}
+        </p>
       )}
 
       {!isLoading && (
@@ -319,6 +349,61 @@ let qiData = [
   )
 ]
 
-let charData = [qiData]
+let yueData = [
+  new CharCompo(
+    [
+      [0, 0],
+      [0, 170]
+    ],
+    (p5Inst, loudness, centroid) => {
+      let w = p5Inst.map(centroid, 0, 8000, 10, 80)
+
+      return {
+        weight: w,
+        smooth: 3
+      }
+    },
+    CharType.BLOCK_W,
+    [78, 170]
+  ),
+  new CharCompo(
+    [
+      [28, 56],
+      [28, 112]
+    ],
+    (p5Inst, loudness, centroid) => {
+      let w = p5Inst.map(centroid, 0, 8000, 10, 80)
+
+      return {
+        weight: w,
+        smooth: 3
+      }
+    },
+    CharType.BLOCK_W,
+    [78, 170]
+  ),
+  new CharCompo(
+    [
+      [0, 0],
+      [78, 85],
+      [0, 170]
+    ],
+    (p5Inst, loudness, centroid) => {
+      let w = p5Inst.map(centroid, 0, 8000, 10, 80)
+
+      return {
+        weight: w,
+        smooth: 3
+      }
+    },
+    CharType.BEZIER,
+    [78, 170]
+  )
+]
+
+let charData = [
+  ['气', qiData],
+  ['月', yueData]
+]
 
 export default MySketch
