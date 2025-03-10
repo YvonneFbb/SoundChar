@@ -73,7 +73,7 @@ class CharCompo {
       case CharType.BLOCK_W:
         p5Inst.fill(0)
         p5Inst.rect(
-          this.points[0][0] + wCenter - 200,
+          this.points[0][0] + wCenter - 168,
           this.points[0][1] + hCenter - 200,
           this.points[1][0] - this.points[0][0] + weight,
           this.points[1][1] - this.points[0][1]
@@ -82,7 +82,7 @@ class CharCompo {
       case CharType.BLOCK_H:
         p5Inst.fill(0)
         p5Inst.rect(
-          this.points[0][0] + wCenter - 200,
+          this.points[0][0] + wCenter - 168,
           this.points[0][1] + hCenter - 200,
           this.points[1][0] - this.points[0][0],
           this.points[1][1] - this.points[0][1] + weight
@@ -191,7 +191,7 @@ const MySketch = ({ className }) => {
 
       {!isLoading && !audioAllowed && (
         <button
-          className='absolute bottom-[10px] left-1/2 -translate-x-1/2 flex gap-8 z-10'
+          className='absolute bottom-1/4 left-1/2 -translate-x-1/2 flex gap-8 z-10'
           onClick={async () => {
             await samplerRef.current?.enable()
             setAudioAllowed(true)
