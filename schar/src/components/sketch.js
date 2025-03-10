@@ -1,5 +1,7 @@
+'use client'
+
 import React, { useRef, useState, useEffect } from 'react'
-import p5Types from 'p5'
+import p5 from 'p5'
 import dynamic from 'next/dynamic'
 
 const Sketch = dynamic(
@@ -11,25 +13,10 @@ const Sketch = dynamic(
   { ssr: false }
 )
 
-const CharType = {
-  BLOCK_W: 0,
-  BLOCK_H: 1,
-  BEZIER: 2
-}
-
 class Sampler {
-  mic: p5.AudioIn
-  fft: p5.FFT
-  sampleInterval: number
-  lastSampleTime: number
-  loudness: number
-  centroid: number
-  gate: number
-  active: boolean
-
   constructor (sampleInterval = 300) {
-    this.mic = new p5.AudioIn()
-    this.fft = new p5.FFT(0.8, 64)
+    this.mic = new window.p5.AudioIn()
+    this.fft = new window.p5.FFT(0.8, 64)
     this.fft.setInput(this.mic)
 
     this.sampleInterval = sampleInterval
@@ -39,19 +26,18 @@ class Sampler {
     this.gate = 50
     this.active = false
 
-    // 先静音启动
     this.mic.start(() => {
-      this.mic.amp(0) // 初始静音
+      this.mic.amp(0)
     })
   }
 
   async enable () {
-    await (navigator as any).mediaDevices.getUserMedia({ audio: true })
-    this.mic.amp(1) // 激活麦克风
+    await navigator.mediaDevices.getUserMedia({ audio: true })
+    this.mic.amp(1)
   }
 
-  sample (p5: p5Types) {
-    const currentTime = p5.millis()
+  sample (p5Inst) {
+    const currentTime = p5Inst.millis()
     if (currentTime - this.lastSampleTime >= this.sampleInterval) {
       this.lastSampleTime = currentTime
       const spectrum = this.fft.analyze()
@@ -65,6 +51,12 @@ class Sampler {
   }
 }
 
+const CharType = {
+  BLOCK_W: 'BLOCK_W',
+  BLOCK_H: 'BLOCK_H',
+  BEZIER: 'BEZIER'
+}
+
 class CharCompo {
   constructor (points, mapfunc, type) {
     this.points = points
@@ -72,63 +64,42 @@ class CharCompo {
     this.type = type
   }
 
-  draw (p5: p5Types, center, loudness, centroid) {
-    let { weight, smooth } = this.mapfunc(p5, loudness, centroid)
-
-    //   for (let i = 0; i < this.points.length; i++) {
-    //     let p = this.points[i]
-    //     p5.fill(255, 0, 0)
-    //     p5.ellipse(p[0], p[1], 5, 5)
-    //   }
-    // console.log(center, loudness, centroid)
+  draw (p5Inst, center, loudness, centroid) {
+    const { weight, smooth } = this.mapfunc(p5Inst, loudness, centroid)
 
     switch (this.type) {
       case CharType.BLOCK_W:
-        {
-          p5.fill(0)
-          p5.rect(
-            this.points[0][0] + center,
-            this.points[0][1] + center / 2,
-            this.points[1][0] - this.points[0][0] + weight,
-            this.points[1][1] - this.points[0][1]
-          )
-        }
+        p5Inst.fill(0)
+        p5Inst.rect(
+          this.points[0][0] + center,
+          this.points[0][1] + center / 2,
+          this.points[1][0] - this.points[0][0] + weight,
+          this.points[1][1] - this.points[0][1]
+        )
         break
       case CharType.BLOCK_H:
-        {
-          p5.fill(0)
-          p5.rect(
-            this.points[0][0] + center,
-            this.points[0][1] + center / 2,
-            this.points[1][0] - this.points[0][0],
-            this.points[1][1] - this.points[0][1] + weight
-          )
-        }
+        p5Inst.fill(0)
+        p5Inst.rect(
+          this.points[0][0] + center,
+          this.points[0][1] + center / 2,
+          this.points[1][0] - this.points[0][0],
+          this.points[1][1] - this.points[0][1] + weight
+        )
         break
     }
   }
 }
 
-interface ComponentProps {
-  className?: string
-  globalInt?: number
-  onIntChange?: (value: number) => void
-}
-
-const LRControlButtons: React.FC<{
-  value: number
-  onIncrement: () => void
-  onDecrement: () => void
-}> = ({ value, onIncrement, onDecrement }) => (
+const LRControlButtons = ({ value, onIncrement, onDecrement }) => (
   <div>
-    <div className='absolute top-1/2 left-1/4 -translate-x-1/2 -translate-y-1/2 flex z-10 '>
+    <div className='absolute top-1/2 left-1/4 -translate-x-1/2 -translate-y-1/2 flex z-10'>
       <button
         onClick={onDecrement}
         className='w-8 h-8 clip-triangle-left hover:bg-blue-600 bg-[#0c75ff]'
       />
     </div>
 
-    <div className='absolute top-1/2 right-1/4 -translate-x-1/2 -translate-y-1/2 flex z-10 '>
+    <div className='absolute top-1/2 right-1/4 -translate-x-1/2 -translate-y-1/2 flex z-10'>
       <button
         onClick={onIncrement}
         className='w-8 h-8 clip-triangle-right hover:bg-blue-600 bg-[#0c75ff]'
@@ -137,14 +108,14 @@ const LRControlButtons: React.FC<{
   </div>
 )
 
-const MySketch: React.FC<ComponentProps> = ({ className }) => {
+const MySketch = ({ className }) => {
   const [globalInt, setGlobalInt] = useState(0)
   const [audioAllowed, setAudioAllowed] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
-  const samplerRef = useRef<Sampler>()
+  const samplerRef = useRef()
   const globalIntRef = useRef(globalInt)
 
-  const containerRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef(null)
   const [canvasSize, setCanvasSize] = useState(800)
   const canvasSizeRef = useRef(canvasSize)
 
@@ -154,7 +125,6 @@ const MySketch: React.FC<ComponentProps> = ({ className }) => {
     setCanvasSize(800)
   }
 
-  // 同步ref值
   useEffect(() => {
     globalIntRef.current = globalInt
   }, [globalInt])
@@ -162,26 +132,28 @@ const MySketch: React.FC<ComponentProps> = ({ className }) => {
     canvasSizeRef.current = canvasSize
   }, [canvasSize])
 
-  const setup = (p5: p5Types, canvasParentRef: Element) => {
-    p5.createCanvas(canvasSizeRef.current, canvasSizeRef.current).parent(
-      canvasParentRef
+  const setup = (p5Inst, canvasParentRef) => {
+    const canvas = p5Inst.createCanvas(
+      canvasSizeRef.current,
+      canvasSizeRef.current
     )
+    canvas.parent(canvasParentRef)
     samplerRef.current = new Sampler(10)
     setIsLoading(false)
 
     window.addEventListener('resize', handleResize)
   }
 
-  const draw = (p5: p5Types) => {
-    if (p5.width !== canvasSizeRef.current) {
-      p5.resizeCanvas(canvasSizeRef.current, canvasSizeRef.current)
+  const draw = p5Inst => {
+    if (p5Inst.width !== canvasSizeRef.current) {
+      p5Inst.resizeCanvas(canvasSizeRef.current, canvasSizeRef.current)
     }
-
-    p5.background(255)
-    const data = samplerRef.current?.sample(p5)
+    p5Inst.background(255)
+    const data = samplerRef.current?.sample(p5Inst)
+    if (!data) return
 
     qiData.forEach(char => {
-      char.draw(p5, p5.width / 2, data.loudness, data.centroid)
+      char.draw(p5Inst, p5Inst.width / 2, data.loudness, data.centroid)
     })
   }
 
@@ -231,8 +203,8 @@ let qiData = [
       [99.2074, 85.0394],
       [99.2074, 141.732]
     ],
-    (p5: p5Types, loudness, centroid) => {
-      let w = p5.map(centroid, 0, 8000, 10, 30)
+    (p5Inst, loudness, centroid) => {
+      let w = p5Inst.map(centroid, 0, 8000, 10, 30)
 
       return {
         weight: w,
@@ -246,8 +218,8 @@ let qiData = [
       [99.2074, 141.732],
       [240.02, 141.732]
     ],
-    (p5: p5Types, loudness, centroid) => {
-      let w = p5.map(loudness, 0, 150, 2, 30)
+    (p5Inst, loudness, centroid) => {
+      let w = p5Inst.map(loudness, 0, 150, 2, 20)
 
       return {
         weight: w,
@@ -261,8 +233,8 @@ let qiData = [
       [99.2074, 184.252],
       [241.869, 184.252]
     ],
-    (p5: p5Types, loudness, centroid) => {
-      let w = p5.map(loudness, 0, 150, 2, 30)
+    (p5Inst, loudness, centroid) => {
+      let w = p5Inst.map(loudness, 0, 150, 2, 20)
 
       return {
         weight: w,
@@ -276,8 +248,8 @@ let qiData = [
       [99.2074, 226.771],
       [240.95, 226.771]
     ],
-    (p5: p5Types, loudness, centroid) => {
-      let w = p5.map(loudness, 0, 150, 2, 30)
+    (p5Inst, loudness, centroid) => {
+      let w = p5Inst.map(loudness, 0, 150, 2, 20)
 
       return {
         weight: w,

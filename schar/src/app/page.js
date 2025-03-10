@@ -1,7 +1,11 @@
 'use client'
-import Image from 'next/image'
-import MySketch from '@/components/sketch.tsx'
-import Header from '@/components/header.tsx'
+
+import Header from '@/components/header'
+import dynamic from 'next/dynamic'
+
+const MySketch = dynamic(() => import('@/components/sketch'), {
+  ssr: false,
+})
 
 export default function Home () {
   return (

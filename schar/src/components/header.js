@@ -1,6 +1,11 @@
+'use client'
+
 export default function Header () {
   return (
-    <header className='border-b border-black sticky top-0 bg-white z-10' style={{ height: '3rem;' }}>
+    <header
+      className='border-b border-black sticky top-0 bg-white z-10'
+      style={{ height: '3rem;' }}
+    >
       <nav className='container mx-auto h-full px-4 flex items-center justify-between'>
         {/* 左侧文字 */}
         <div className='flex-1'>
