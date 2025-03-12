@@ -43,7 +43,7 @@ export default function Home () {
                 This is a step-by-step operation guide and notes:
               </em>
             </p>
-            <ul className='list-disc pl-6 space-y-2 max-w-2xl mx-auto'>
+            <ul className='list-disc text-sm pl-6 space-y-2 max-w-2xl mx-auto'>
               <br />
               <li>
                 Step 1: Click the Start button and tell the computer any sound
@@ -77,7 +77,7 @@ export default function Home () {
                 features.
               </em>
             </p>
-            <ul className='list-disc pl-6 space-y-2 max-w-2xl mx-auto'>
+            <ul className='list-disc text-sm pl-6 space-y-2 max-w-2xl mx-auto'>
               <br />
               <li>
                 A method of "shape, meaning and sound" reconstruction is

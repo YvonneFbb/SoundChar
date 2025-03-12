@@ -4,6 +4,9 @@ import React, { useRef, useState, useEffect } from 'react'
 import initBezier from 'p5bezier'
 import dynamic from 'next/dynamic'
 
+let debug = 0
+let cnt = 0
+
 const Sketch = dynamic(
   () =>
     import('react-p5').then(mod => {
@@ -63,8 +66,9 @@ class Sampler {
 
 const CharType = {
   BLOCK_W: 0,
-  BLOCK_H: 1,
-  BEZIER: 2
+  BLOCK_W_REV: 1,
+  BLOCK_H: 2,
+  BEZIER: 3
 }
 
 class CharCompo {
@@ -79,14 +83,15 @@ class CharCompo {
     this.mapfunc = mapfunc
     this.type = type
     this.size = [size[0] / s, size[1] / s]
+    this.color = null
   }
 
-  draw (p5Inst, p5bezier, loudness, centroid) {
+  draw (p5Inst, p5bezier, loudness, centroid, colorOn) {
     const { weight, smooth } = this.mapfunc(p5Inst, loudness, centroid)
     let s =
       this.size[0] >= this.size[1] * 0.8
         ? p5Inst.width * 0.3
-        : p5Inst.height * 0.3
+        : p5Inst.height * 0.4
     let points = this.points.map(p => {
       return [p[0] * s, p[1] * s]
     })
@@ -94,12 +99,46 @@ class CharCompo {
     for (let i = 0; i < points.length; i++) {
       points[i][0] += p5Inst.width * 0.5 - this.size[0] * s * 0.5
       points[i][1] += p5Inst.height * 0.42 - this.size[1] * s * 0.5
+      // p5Inst.fill('red')
       // p5Inst.ellipse(points[i][0], points[i][1], 10)
+    }
+
+    if (colorOn) {
+      if (this.color == null) {
+        // 创建 RGB 颜色数组
+        const colors = [
+          p5Inst.random(50, 150),
+          p5Inst.random(0, 50), 
+          p5Inst.random(50, 150),
+        ]
+
+        // 随机打乱颜色数组顺序
+        for (let i = colors.length - 1; i > 0; i--) {
+          const j = Math.floor(p5Inst.random(i + 1))
+          ;[colors[i], colors[j]] = [colors[j], colors[i]]
+        }
+
+        // 使用打乱后的颜色创建新的颜色
+        this.color = p5Inst.color(
+          colors[0], // 随机通道 1
+          colors[1], // 随机通道 2
+          colors[2], // 随机通道 3
+          255 * 0.6
+        )
+        p5Inst.fill(this.color)
+        p5Inst.stroke(this.color)
+      } else {
+        p5Inst.fill(this.color)
+        p5Inst.stroke(this.color)
+      }
+    } else {
+      this.color = null
+      p5Inst.fill(0)
+      p5Inst.stroke(0)
     }
 
     switch (this.type) {
       case CharType.BLOCK_W:
-        p5Inst.fill(0)
         p5Inst.strokeWeight(1)
         p5Inst.rect(
           points[0][0],
@@ -108,8 +147,16 @@ class CharCompo {
           points[1][1] - points[0][1]
         )
         break
+      case CharType.BLOCK_W_REV:
+        p5Inst.strokeWeight(1)
+        p5Inst.rect(
+          points[0][0],
+          points[0][1],
+          points[1][0] - points[0][0] - weight,
+          points[1][1] - points[0][1]
+        )
+        break
       case CharType.BLOCK_H:
-        p5Inst.fill(0)
         p5Inst.strokeWeight(1)
         p5Inst.rect(
           points[0][0],
@@ -119,19 +166,9 @@ class CharCompo {
         )
         break
       case CharType.BEZIER:
-        p5Inst.noFill(0)
-        p5Inst.stroke(0)
+        p5Inst.noFill()
         p5Inst.strokeWeight(weight)
-        p5Inst.beginShape()
-        p5Inst.curveVertex(points[0][0], points[0][1])
-        for (let i = 0; i < points.length; i++) {
-          p5Inst.curveVertex(points[i][0], points[i][1])
-        }
-        p5Inst.curveVertex(
-          points[points.length - 1][0],
-          points[points.length - 1][1]
-        )
-        p5Inst.endShape()
+        p5bezier.draw(points, 'OPEN', 4)
         break
     }
   }
@@ -175,6 +212,7 @@ const MySketch = ({ className }) => {
   const [audioAllowed, setAudioAllowed] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [canvasSize, setCanvasSize] = useState([800, 800])
+  const [colorOn, setColorOn] = useState(false)
 
   const samplerRef = useRef()
   const p5bezierRef = useRef()
@@ -205,7 +243,7 @@ const MySketch = ({ className }) => {
       .createCanvas(canvasSizeRef.current, canvasSizeRef.current)
       .parent(canvasParentRef)
     samplerRef.current = new Sampler(p5Inst, 10)
-    // p5bezierRef.current = initBezier(canvas)
+    p5bezierRef.current = initBezier(canvas)
     setIsLoading(false)
 
     p5Inst.getAudioContext().suspend()
@@ -220,11 +258,30 @@ const MySketch = ({ className }) => {
     }
     p5Inst.background(255)
     const data = samplerRef.current?.sample(p5Inst)
-    if (!data) return
+
+    // if (audioAllowed && debug <= 15) {
+    //   data.centroid = 8000
+    //   data.loudness = debug * 10
+    //   cnt += 1
+    // } else {
+    //   return
+    // }
 
     charData[globalIntRef.current][1].forEach(char => {
-      char.draw(p5Inst, p5bezierRef.current, data.loudness, data.centroid)
+      char.draw(
+        p5Inst,
+        p5bezierRef.current,
+        data.loudness,
+        data.centroid,
+        colorOn
+      )
     })
+
+    // if (cnt >= 15) {
+    //   cnt = 0
+    //   debug += 1
+    //   p5Inst.saveCanvas('myCanvas', 'png')
+    // }
   }
 
   return (
@@ -244,6 +301,35 @@ const MySketch = ({ className }) => {
       {isLoading && (
         <div className='inset-0 bg-gray-100 flex items-center justify-center'>
           Loading audio...
+        </div>
+      )}
+
+      {!isLoading && (
+        <div className='fixed top-[80px] right-4 transform -translate-y-1/2'>
+          <div
+            onClick={() => setColorOn(!colorOn)}
+            className='relative w-12 h-6 flex items-center rounded-full p-1 cursor-pointer overflow-hidden border-[1px] border-black'
+          >
+            {/* 背景层 */}
+            <div
+              className={`absolute inset-0 transition-opacity ${
+                colorOn
+                  ? 'opacity-100 bg-gradient-to-tr from-[#0c75ff] to-[#f6c7ac]'
+                  : 'opacity-0 bg-gradient-to-tr from-[#0c75ff] to-[#f6c7ac]'
+              }`}
+            />
+            <div
+              className={`absolute inset-0 transition-opacity bg-black ${
+                colorOn ? 'opacity-0' : 'opacity-100'
+              }`}
+            />
+            {/* 圆形滑块 */}
+            <div
+              className={`relative bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
+                colorOn ? 'translate-x-6' : 'translate-x-0'
+              }`}
+            ></div>
+          </div>
         </div>
       )}
 
@@ -352,18 +438,23 @@ let qiData = [
 let yueData = [
   new CharCompo(
     [
-      [0, 0],
-      [0, 170]
+      [3, 0],
+      [3, 170]
     ],
     (p5Inst, loudness, centroid) => {
-      let w = p5Inst.map(centroid, 0, 8000, 10, 80)
+      let w
+      if (centroid < 1000) {
+        w = p5Inst.map(centroid, 0, 1000, 10, 30)
+      } else {
+        w = p5Inst.map(centroid, 1000, 6000, 30, 10)
+      }
 
       return {
         weight: w,
         smooth: 3
       }
     },
-    CharType.BLOCK_W,
+    CharType.BLOCK_W_REV,
     [78, 170]
   ),
   new CharCompo(
@@ -372,7 +463,7 @@ let yueData = [
       [28, 112]
     ],
     (p5Inst, loudness, centroid) => {
-      let w = p5Inst.map(centroid, 0, 8000, 10, 80)
+      let w = p5Inst.map(loudness, 0, 120, 10, 80)
 
       return {
         weight: w,
@@ -385,11 +476,11 @@ let yueData = [
   new CharCompo(
     [
       [0, 0],
-      [78, 85],
+      [78 * 2, 85],
       [0, 170]
     ],
     (p5Inst, loudness, centroid) => {
-      let w = p5Inst.map(centroid, 0, 8000, 10, 80)
+      let w = p5Inst.map(centroid, 0, 8000, 10, 30)
 
       return {
         weight: w,
