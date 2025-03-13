@@ -315,7 +315,7 @@ const MySketch = ({ className }) => {
         <div className='fixed top-[80px] right-4 transform -translate-y-1/2'>
           <div
             onClick={() => setColorOn(!colorOn)}
-            className='relative w-10 h-5 flex items-center rounded-full p-1 cursor-pointer overflow-hidden border-[1px] border-black'
+            className='relative w-8 h-5 flex items-center rounded-full p-1 cursor-pointer overflow-hidden border-[1px] border-black'
           >
             {/* 背景层 */}
             <div
@@ -333,7 +333,7 @@ const MySketch = ({ className }) => {
             {/* 圆形滑块 */}
             <div
               className={`relative bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
-                colorOn ? 'translate-x-[17px]' : 'translate-x-[-3px]'
+                colorOn ? 'translate-x-[9px]' : 'translate-x-[-3px]'
               }`}
             ></div>
           </div>
