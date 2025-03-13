@@ -4,8 +4,13 @@ import React, { useRef, useState, useEffect } from 'react'
 import initBezier from 'p5bezier'
 import dynamic from 'next/dynamic'
 
-let debug = 0
+/* For pic taking only */
+let takePic = false
 let cnt = 0
+let lCnt = 0
+let lCntMax = 18
+let cCnt = 0
+let cCntMax = 10
 
 const Sketch = dynamic(
   () =>
@@ -99,24 +104,18 @@ class CharCompo {
     for (let i = 0; i < points.length; i++) {
       points[i][0] += p5Inst.width * 0.5 - this.size[0] * s * 0.5
       points[i][1] += p5Inst.height * 0.42 - this.size[1] * s * 0.5
-      // p5Inst.fill('red')
-      // p5Inst.ellipse(points[i][0], points[i][1], 10)
     }
 
     if (colorOn) {
       if (this.color == null) {
         // 创建 RGB 颜色数组
         const colors = [
-          p5Inst.random(50, 150),
-          p5Inst.random(0, 50), 
-          p5Inst.random(50, 150),
+          p5Inst.random(240, 255),
+          p5Inst.random(0, 50),
+          p5Inst.random(0, 200)
         ]
-
         // 随机打乱颜色数组顺序
-        for (let i = colors.length - 1; i > 0; i--) {
-          const j = Math.floor(p5Inst.random(i + 1))
-          ;[colors[i], colors[j]] = [colors[j], colors[i]]
-        }
+        colors.sort(() => Math.random() - 0.5)
 
         // 使用打乱后的颜色创建新的颜色
         this.color = p5Inst.color(
@@ -259,13 +258,11 @@ const MySketch = ({ className }) => {
     p5Inst.background(255)
     const data = samplerRef.current?.sample(p5Inst)
 
-    // if (audioAllowed && debug <= 15) {
-    //   data.centroid = 8000
-    //   data.loudness = debug * 10
-    //   cnt += 1
-    // } else {
-    //   return
-    // }
+    if (takePic && audioAllowed && lCnt <= lCntMax && cCnt <= cCntMax) {
+      data.centroid = cCnt * 1000
+      data.loudness = lCnt * 10
+      cnt += 1
+    }
 
     charData[globalIntRef.current][1].forEach(char => {
       char.draw(
@@ -277,11 +274,21 @@ const MySketch = ({ className }) => {
       )
     })
 
-    // if (cnt >= 15) {
-    //   cnt = 0
-    //   debug += 1
-    //   p5Inst.saveCanvas('myCanvas', 'png')
-    // }
+    if (takePic && cnt >= 15) {
+      if (audioAllowed && lCnt <= lCntMax && cCnt <= cCntMax) {
+        p5Inst.saveCanvas(
+          'myCanvas' + '-' + data.centroid + '-' + data.loudness,
+          'png'
+        )
+      }
+
+      cnt = 0
+      lCnt += 1
+      if (lCnt > lCntMax) {
+        cCnt += 1
+        lCnt = 0
+      }
+    }
   }
 
   return (
@@ -308,7 +315,7 @@ const MySketch = ({ className }) => {
         <div className='fixed top-[80px] right-4 transform -translate-y-1/2'>
           <div
             onClick={() => setColorOn(!colorOn)}
-            className='relative w-12 h-6 flex items-center rounded-full p-1 cursor-pointer overflow-hidden border-[1px] border-black'
+            className='relative w-10 h-5 flex items-center rounded-full p-1 cursor-pointer overflow-hidden border-[1px] border-black'
           >
             {/* 背景层 */}
             <div
@@ -326,7 +333,7 @@ const MySketch = ({ className }) => {
             {/* 圆形滑块 */}
             <div
               className={`relative bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
-                colorOn ? 'translate-x-6' : 'translate-x-0'
+                colorOn ? 'translate-x-[17px]' : 'translate-x-[-3px]'
               }`}
             ></div>
           </div>
