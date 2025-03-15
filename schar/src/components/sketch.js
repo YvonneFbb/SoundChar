@@ -124,12 +124,9 @@ class CharCompo {
           colors[2], // 随机通道 3
           255 * 0.6
         )
-        p5Inst.fill(this.color)
-        p5Inst.stroke(this.color)
-      } else {
-        p5Inst.fill(this.color)
-        p5Inst.stroke(this.color)
       }
+      p5Inst.fill(this.color)
+      p5Inst.stroke(this.color)
     } else {
       this.color = null
       p5Inst.fill(0)

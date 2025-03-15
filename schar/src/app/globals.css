@@ -54,3 +54,16 @@ body {
 .song-font {
   font-family: 'SimSun', '宋体', serif;
 }
+
+/* 隐藏引用面板的滚动条 */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  /* IE 和 Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+  /* Chrome 和 Safari */
+}

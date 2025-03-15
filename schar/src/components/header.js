@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 
-export default function Header () {
+export default function Header ({ onReferenceClick }) {
   return (
     <header
       className='border-b border-black sticky top-0 bg-white z-10'
@@ -22,14 +22,11 @@ export default function Header () {
         <div className='flex-auto' />
 
         {/* 右侧链接 */}
-        <div className='flex px-4 justify-end'>
-          <a
-            href='#contact'
-            className='text-black-600 transition-colors'
-          >
+        <button className='flex px-4 justify-end' onClick={onReferenceClick}>
+          <a href='#contact' className='text-black-600 transition-colors underline'>
             Reference
           </a>
-        </div>
+        </button>
       </nav>
     </header>
   )
