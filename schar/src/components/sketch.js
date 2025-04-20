@@ -25,8 +25,15 @@ const Sketch = dynamic(
   { ssr: false }
 )
 
+const CharType = {
+  BLOCK_W: 0,
+  BLOCK_W_MID: 1,
+  ARC: 2,
+  // BEZIER: 5
+}
+
 class Sampler {
-  constructor (p5Inst, sampleInterval = 300) {
+  constructor(p5Inst, sampleInterval = 300) {
     this.mic = new window.p5.AudioIn()
     this.fft = new window.p5.FFT(0.8, 64)
     this.fft.setInput(this.mic)
@@ -40,7 +47,7 @@ class Sampler {
     this.active = false
   }
 
-  async enable () {
+  async enable() {
     await this.p5.userStartAudio()
     await navigator.mediaDevices.getUserMedia({ audio: true })
     this.mic.start(() => {
@@ -48,13 +55,13 @@ class Sampler {
     })
   }
 
-  async stop () {
+  async stop() {
     await this.p5.userStartAudio()
     await navigator.mediaDevices.getUserMedia({ audio: true })
     this.mic.stop()
   }
 
-  sample () {
+  sample() {
     const currentTime = this.p5.millis()
     if (currentTime - this.lastSampleTime >= this.sampleInterval) {
       this.lastSampleTime = currentTime
@@ -69,42 +76,106 @@ class Sampler {
   }
 }
 
-const CharType = {
-  BLOCK_W: 0,
-  BLOCK_W_REV: 1,
-  BLOCK_H: 2,
-  BEZIER: 3
+function calculateArc(points) {
+  // 解构三点坐标
+  const [A, B, C] = points.map(p => ({ x: p[0], y: p[1] }))
+  // 三点共线检测 (向量叉积法)
+  const vecAB = { x: B.x - A.x, y: B.y - A.y }
+  const vecAC = { x: C.x - A.x, y: C.y - A.y }
+  if (vecAB.x * vecAC.y === vecAB.y * vecAC.x) return null
+  // 计算垂直平分线方程组
+  const midAB = { x: (A.x + B.x) / 2, y: (A.y + B.y) / 2 }
+  const midBC = { x: (B.x + C.x) / 2, y: (B.y + C.y) / 2 }
+  // AB垂直平分线方程: (B.x - A.x)(x - midAB.x) + (B.y - A.y)(y - midAB.y) = 0
+  const eq1 = {
+    a: B.x - A.x,
+    b: B.y - A.y,
+    c: (B.x - A.x) * midAB.x + (B.y - A.y) * midAB.y
+  }
+  // BC垂直平分线方程: (C.x - B.x)(x - midBC.x) + (C.y - B.y)(y - midBC.y) = 0
+  const eq2 = {
+    a: C.x - B.x,
+    b: C.y - B.y,
+    c: (C.x - B.x) * midBC.x + (C.y - B.y) * midBC.y
+  }
+  // 解线性方程组
+  const det = eq1.a * eq2.b - eq2.a * eq1.b
+  if (det === 0) return null // 平行线无解
+  const h = (eq2.b * eq1.c - eq1.b * eq2.c) / det
+  const k = (eq1.a * eq2.c - eq2.a * eq1.c) / det
+  const r = Math.hypot(A.x - h, A.y - k)
+  // 计算三点相对于圆心的角度（弧度）
+  const angles = points.map(p => {
+    const dx = p[0] - h,
+      dy = p[1] - k
+    let angle = Math.atan2(dy, dx)
+    return angle < 0 ? angle + 2 * Math.PI : angle // 转0~2π
+  })
+  // 确定绘制顺序 (保持输入点顺序)
+  const angleRef = angles[0]
+  const sorted = angles.slice().sort((a, b) => a - b)
+
+  // 判断跨零情况 (如355°→5°)
+  const isCrossZero = sorted[2] - sorted[0] > Math.PI
+  const start = isCrossZero ? sorted[2] : sorted[0]
+  const end = isCrossZero ? sorted[1] + 2 * Math.PI : sorted[2]
+  return {
+    center: [h, k],
+    radius: r,
+    startAngle: start,
+    endAngle: end,
+    clockwise: angles[1] > angles[0]
+  }
 }
 
 class CharCompo {
-  constructor (points, mapfunc, type, size) {
-    let s = size[0] >= size[1] ? size[0] : size[1]
-    for (let i = 0; i < points.length; i++) {
-      points[i][0] /= s
-      points[i][1] /= s
-    }
-
+  constructor(points, mapfunc, type, size) {
     this.points = points
     this.mapfunc = mapfunc
     this.type = type
-    this.size = [size[0] / s, size[1] / s]
+    this.size = size
     this.color = null
+
+    this.block = {
+      angle: 0,
+      distance: 0
+    }
+    this.arc = null
   }
 
-  draw (p5Inst, p5bezier, loudness, centroid, colorOn) {
-    const { weight, smooth } = this.mapfunc(p5Inst, loudness, centroid)
-    let s =
-      this.size[0] >= this.size[1] * 0.8
-        ? p5Inst.width * 0.3
-        : p5Inst.height * 0.4
-    let points = this.points.map(p => {
-      return [p[0] * s, p[1] * s]
-    })
-
-    for (let i = 0; i < points.length; i++) {
-      points[i][0] += p5Inst.width * 0.5 - this.size[0] * s * 0.5
-      points[i][1] += p5Inst.height * 0.42 - this.size[1] * s * 0.5
+  init(p5Inst) {
+    switch (this.type) {
+      case CharType.BLOCK_W:
+      case CharType.BLOCK_W_MID:
+        this.block.angle = p5Inst.atan2(
+          this.points[1][1] - this.points[0][1],
+          this.points[1][0] - this.points[0][0]
+        )
+        this.block.distance = p5Inst.dist(
+          this.points[0][0],
+          this.points[0][1],
+          this.points[1][0],
+          this.points[1][1]
+        )
+        break
+      case CharType.ARC:
+        if (this.points.length !== 3) {
+          console.error('Arc needs 3 points')
+          break
+        }
+        this.arc = calculateArc(this.points)
+        break
+      // case CharType.BEZIER:
     }
+  }
+
+  draw(p5Inst, orig, loudness, centroid, colorOn) {
+    const { weight, smooth } = this.mapfunc(p5Inst, loudness, centroid)
+    orig[0] = Math.ceil((orig[0] - this.size[0]) / 2) * orig[2]
+    orig[1] = Math.floor((orig[1] - this.size[1]) / 2) * orig[2]
+    let points = this.points.map(p => {
+      return [p[0] * orig[2] + orig[0], p[1] * orig[2] + orig[1]]
+    })
 
     if (colorOn) {
       if (this.color == null) {
@@ -135,38 +206,52 @@ class CharCompo {
 
     switch (this.type) {
       case CharType.BLOCK_W:
+        p5Inst.push()
         p5Inst.strokeWeight(1)
-        p5Inst.rect(
-          points[0][0],
-          points[0][1],
-          points[1][0] - points[0][0] + weight,
-          points[1][1] - points[0][1]
-        )
+        p5Inst.translate(points[0][0], points[0][1])
+        p5Inst.rotate(this.block.angle)
+        p5Inst.rect(0, 0, this.block.distance * orig[2], -weight)
+        p5Inst.pop()
         break
-      case CharType.BLOCK_W_REV:
+      case CharType.BLOCK_W_MID:
+        p5Inst.push()
         p5Inst.strokeWeight(1)
-        p5Inst.rect(
-          points[0][0],
-          points[0][1],
-          points[1][0] - points[0][0] - weight,
-          points[1][1] - points[0][1]
-        )
+        p5Inst.translate(points[0][0], points[0][1])
+        p5Inst.rotate(this.block.angle)
+        p5Inst.rect(0, -weight / 2, this.block.distance * orig[2], weight)
+        p5Inst.pop()
         break
-      case CharType.BLOCK_H:
-        p5Inst.strokeWeight(1)
-        p5Inst.rect(
-          points[0][0],
-          points[0][1],
-          points[1][0] - points[0][0],
-          points[1][1] - points[0][1] + weight
-        )
-        break
-      case CharType.BEZIER:
+      case CharType.ARC:
+        p5Inst.push()
         p5Inst.noFill()
         p5Inst.strokeWeight(weight)
-        p5bezier.draw(points, 'OPEN', 4)
+        p5Inst.translate(
+          this.arc.center[0] * orig[2] + orig[0],
+          this.arc.center[1] * orig[2] + orig[1]
+        )
+        p5Inst.rotate(this.arc.startAngle)
+        p5Inst.arc(
+          0,
+          0,
+          this.arc.radius * orig[2] * 2,
+          this.arc.radius * orig[2] * 2,
+          0,
+          this.arc.endAngle - this.arc.startAngle,
+          this.arc.clockwise ? 'OPEN' : 'PIE'
+        )
+        p5Inst.pop()
         break
+      // case CharType.BEZIER:
+      //   p5Inst.noFill()
+      //   p5Inst.strokeWeight(weight)
+      //   p5bezier.draw(points, 'OPEN', 4)
+      //   break
     }
+
+    // for (let i = 0; i < points.length; i++) {
+    //   p5Inst.fill('red')
+    //   p5Inst.ellipse(points[i][0], points[i][1], 5, 5)
+    // }
   }
 }
 
@@ -221,6 +306,24 @@ const MySketch = ({ className }) => {
     setCanvasSize([width, height])
   }
 
+  const drawGrid = (p5Inst, gridSize = 30) => {
+    p5Inst.push();
+    p5Inst.stroke(220); // 浅灰色网格线
+    p5Inst.strokeWeight(0.5);
+
+    // 绘制水平线
+    for (let y = 0; y < p5Inst.height; y += gridSize) {
+      p5Inst.line(0, y, p5Inst.width, y);
+    }
+
+    // 绘制垂直线
+    for (let x = 0; x < p5Inst.width; x += gridSize) {
+      p5Inst.line(x, 0, x, p5Inst.height);
+    }
+
+    p5Inst.pop();
+  }
+
   useEffect(() => {
     globalIntRef.current = globalInt
   }, [globalInt])
@@ -238,14 +341,22 @@ const MySketch = ({ className }) => {
     const canvas = p5Inst
       .createCanvas(canvasSizeRef.current, canvasSizeRef.current)
       .parent(canvasParentRef)
-    samplerRef.current = new Sampler(p5Inst, 10)
+    samplerRef.current = new Sampler(p5Inst, 5)
     p5bezierRef.current = initBezier(canvas)
+
+    for (let data of charData) {
+      data[1].forEach(char => {
+        char.init(p5Inst)
+      })
+    }
+
     setIsLoading(false)
 
     p5Inst.getAudioContext().suspend()
   }
 
   const draw = p5Inst => {
+    const gridSize = 30
     if (
       p5Inst.width !== canvasSizeRef.current[0] ||
       p5Inst.height !== canvasSizeRef.current[1]
@@ -253,8 +364,9 @@ const MySketch = ({ className }) => {
       p5Inst.resizeCanvas(canvasSizeRef.current[0], canvasSizeRef.current[1])
     }
     p5Inst.background(255)
-    const data = samplerRef.current?.sample(p5Inst)
+    drawGrid(p5Inst, gridSize)
 
+    const data = samplerRef.current?.sample(p5Inst)
     if (takePic && audioAllowed && lCnt <= lCntMax && cCnt <= cCntMax) {
       data.centroid = cCnt * 1000
       data.loudness = lCnt * 10
@@ -264,7 +376,7 @@ const MySketch = ({ className }) => {
     charData[globalIntRef.current][1].forEach(char => {
       char.draw(
         p5Inst,
-        p5bezierRef.current,
+        [canvasSizeRef.current[0] / gridSize, canvasSizeRef.current[1] / gridSize, gridSize],
         data.loudness,
         data.centroid,
         colorOn
@@ -296,7 +408,6 @@ const MySketch = ({ className }) => {
             setGlobalInt(prev =>
               prev >= charData.length - 1 ? prev : prev + 1
             )
-            console.log(globalInt)
           }}
           onDecrement={() => setGlobalInt(prev => (prev < 1 ? prev : prev - 1))}
         />
@@ -316,22 +427,19 @@ const MySketch = ({ className }) => {
           >
             {/* 背景层 */}
             <div
-              className={`absolute inset-0 transition-opacity ${
-                colorOn
-                  ? 'opacity-100 bg-gradient-to-tr from-[#0c75ff] to-[#f6c7ac]'
-                  : 'opacity-0 bg-gradient-to-tr from-[#0c75ff] to-[#f6c7ac]'
-              }`}
+              className={`absolute inset-0 transition-opacity ${colorOn
+                ? 'opacity-100 bg-gradient-to-tr from-[#0c75ff] to-[#f6c7ac]'
+                : 'opacity-0 bg-gradient-to-tr from-[#0c75ff] to-[#f6c7ac]'
+                }`}
             />
             <div
-              className={`absolute inset-0 transition-opacity bg-black ${
-                colorOn ? 'opacity-0' : 'opacity-100'
-              }`}
+              className={`absolute inset-0 transition-opacity bg-black ${colorOn ? 'opacity-0' : 'opacity-100'
+                }`}
             />
             {/* 圆形滑块 */}
             <div
-              className={`relative bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
-                colorOn ? 'translate-x-[9px]' : 'translate-x-[-3px]'
-              }`}
+              className={`relative bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${colorOn ? 'translate-x-[9px]' : 'translate-x-[-3px]'
+                }`}
             ></div>
           </div>
         </div>
@@ -367,14 +475,16 @@ const MySketch = ({ className }) => {
   )
 }
 
+const DefaultWidth = 30
+
 let qiData = [
   new CharCompo(
     [
       [0, 0],
-      [0, 56]
+      [0, 4]
     ],
     (p5Inst, loudness, centroid) => {
-      let w = p5Inst.map(centroid, 0, 8000, 10, 80)
+      let w = p5Inst.map(centroid, 0, 8000, DefaultWidth, 80)
 
       return {
         weight: w,
@@ -382,17 +492,17 @@ let qiData = [
       }
     },
     CharType.BLOCK_W,
-    [140, 140]
+    [10, 10]
   ),
   new CharCompo(
     [
-      [0, 56],
-      [140, 56]
+      [0, 4],
+      [10, 4]
     ],
     (p5Inst, loudness, centroid) => {
       let w
       if (loudness < 60) {
-        w = p5Inst.map(loudness, 0, 60, 10, 20)
+        w = p5Inst.map(loudness, 0, 60, DefaultWidth, 20)
       } else {
         w = p5Inst.map(loudness, 60, 180, 20, 1)
       }
@@ -402,53 +512,53 @@ let qiData = [
         smooth: 3
       }
     },
-    CharType.BLOCK_H,
-    [140, 140]
+    CharType.BLOCK_W,
+    [10, 10]
   ),
   new CharCompo(
     [
-      [0, 98],
-      [140, 98]
+      [0, 7],
+      [10, 7]
     ],
     (p5Inst, loudness, centroid) => {
-      let w = p5Inst.map(loudness, 0, 150, 10, 60)
+      let w = p5Inst.map(loudness, 0, 150, DefaultWidth, 60)
 
       return {
         weight: w,
         smooth: 3
       }
     },
-    CharType.BLOCK_H,
-    [140, 140]
+    CharType.BLOCK_W,
+    [10, 10]
   ),
   new CharCompo(
     [
-      [0, 140],
-      [140, 140]
+      [0, 10],
+      [10, 10]
     ],
     (p5Inst, loudness, centroid) => {
-      let w = p5Inst.map(loudness, 0, 150, 10, 15)
+      let w = p5Inst.map(loudness, 0, 150, DefaultWidth, 15)
 
       return {
         weight: w,
         smooth: 3
       }
     },
-    CharType.BLOCK_H,
-    [140, 140]
+    CharType.BLOCK_W,
+    [10, 10]
   )
 ]
 
 let yueData = [
   new CharCompo(
     [
-      [3, 0],
-      [3, 170]
+      [0, 0],
+      [0, 12]
     ],
     (p5Inst, loudness, centroid) => {
       let w
       if (centroid < 1000) {
-        w = p5Inst.map(centroid, 0, 1000, 10, 30)
+        w = p5Inst.map(centroid, 0, 1000, DefaultWidth, 30)
       } else {
         w = p5Inst.map(centroid, 1000, 6000, 30, 10)
       }
@@ -458,16 +568,16 @@ let yueData = [
         smooth: 3
       }
     },
-    CharType.BLOCK_W_REV,
-    [78, 170]
+    CharType.BLOCK_W,
+    [7, 12]
   ),
   new CharCompo(
     [
-      [28, 56],
-      [28, 112]
+      [2, 4],
+      [2, 8]
     ],
     (p5Inst, loudness, centroid) => {
-      let w = p5Inst.map(loudness, 0, 120, 10, 80)
+      let w = p5Inst.map(loudness, 0, 120, DefaultWidth, 80)
 
       return {
         weight: w,
@@ -475,30 +585,242 @@ let yueData = [
       }
     },
     CharType.BLOCK_W,
-    [78, 170]
+    [7, 12]
   ),
   new CharCompo(
     [
-      [0, 0],
-      [78 * 2, 85],
-      [0, 170]
+      [0.5, 0.5],
+      [6.5, 6],
+      [0.5, 11.5]
     ],
     (p5Inst, loudness, centroid) => {
-      let w = p5Inst.map(centroid, 0, 8000, 10, 30)
+      let w = p5Inst.map(centroid, 0, 8000, DefaultWidth, 30)
 
       return {
         weight: w,
         smooth: 3
       }
     },
-    CharType.BEZIER,
-    [78, 170]
+    CharType.ARC,
+    [7, 12]
+  )
+]
+
+let muData = [
+  new CharCompo(
+    [
+      [4, 0],
+      [4, 12]
+    ],
+    (p5Inst, loudness, centroid) => {
+      return {
+        weight: DefaultWidth,
+        smooth: 3
+      }
+    },
+    CharType.BLOCK_W_MID,
+    [8, 12]
+  ),
+  new CharCompo(
+    [
+      [0.5, 1.5],
+      [4, 5]
+    ],
+    (p5Inst, loudness, centroid) => {
+      return {
+        weight: DefaultWidth,
+        smooth: 3
+      }
+    },
+    CharType.BLOCK_W,
+    [8, 12]
+  ),
+  new CharCompo(
+    [
+      [4, 5],
+      [7.5, 1.5]
+    ],
+    (p5Inst, loudness, centroid) => {
+      return {
+        weight: DefaultWidth,
+        smooth: 3
+      }
+    },
+    CharType.BLOCK_W,
+    [8, 12]
+  ),
+  new CharCompo(
+    [
+      [4, 7],
+      [0.5, 10.5]
+    ],
+    (p5Inst, loudness, centroid) => {
+      return {
+        weight: DefaultWidth,
+        smooth: 3
+      }
+    },
+    CharType.BLOCK_W,
+    [8, 12]
+  ),
+  new CharCompo(
+    [
+      [7.5, 10.5],
+      [4, 7]
+    ],
+    (p5Inst, loudness, centroid) => {
+      return {
+        weight: DefaultWidth,
+        smooth: 3
+      }
+    },
+    CharType.BLOCK_W,
+    [8, 12]
+  ),
+]
+
+let shuiData = [
+  new CharCompo(
+    [
+      [0, 1],
+      [0, 3]
+    ],
+    (p5Inst, loudness, centroid) => {
+      return {
+        weight: DefaultWidth,
+        smooth: 3
+      }
+    },
+    CharType.BLOCK_W,
+    [6, 12]
+  ),
+  new CharCompo(
+    [
+      [0, 8],
+      [0, 10]
+    ],
+    (p5Inst, loudness, centroid) => {
+      return {
+        weight: DefaultWidth,
+        smooth: 3
+      }
+    },
+    CharType.BLOCK_W,
+    [6, 12]
+  ),
+  new CharCompo(
+    [
+      [6, 4],
+      [6, 2]
+    ],
+    (p5Inst, loudness, centroid) => {
+      return {
+        weight: DefaultWidth,
+        smooth: 3
+      }
+    },
+    CharType.BLOCK_W,
+    [6, 12]
+  ),
+  new CharCompo(
+    [
+      [6, 11],
+      [6, 9]
+    ],
+    (p5Inst, loudness, centroid) => {
+      return {
+        weight: DefaultWidth,
+        smooth: 3
+      }
+    },
+    CharType.BLOCK_W,
+    [6, 12]
+  ),
+  new CharCompo(
+    [
+      [3.6, 0.2],
+      [2.3, 5.1]
+    ],
+    (p5Inst, loudness, centroid) => {
+      return {
+        weight: DefaultWidth,
+        smooth: 3
+      }
+    },
+    CharType.BLOCK_W_MID,
+    [6, 12]
+  ),
+  new CharCompo(
+    [
+      [2.25, 4.75],
+      [3.75, 7.3]
+    ],
+    (p5Inst, loudness, centroid) => {
+      return {
+        weight: DefaultWidth,
+        smooth: 3
+      }
+    },
+    CharType.BLOCK_W_MID,
+    [6, 12]
+  ),
+  new CharCompo(
+    [
+      [3.7, 6.9],
+      [2.4, 11.7]
+    ],
+    (p5Inst, loudness, centroid) => {
+      return {
+        weight: DefaultWidth,
+        smooth: 3
+      }
+    },
+    CharType.BLOCK_W_MID,
+    [6, 12]
+  ),
+]
+
+let tuData = [
+  new CharCompo(
+    [
+      [0, 6],
+      [12, 6]
+    ],
+    (p5Inst, loudness, centroid) => {
+      return {
+        weight: DefaultWidth,
+        smooth: 3
+      }
+    },
+    CharType.BLOCK_W,
+    [12, 6]
+  ),
+  new CharCompo(
+    [
+      [6, 0.5],
+      [6, 5.5],
+      [6.001, 0.5]
+    ],
+    (p5Inst, loudness, centroid) => {
+      let w = p5Inst.map(centroid, 0, 8000, DefaultWidth, 30)
+
+      return {
+        weight: w,
+        smooth: 3
+      }
+    },
+    CharType.ARC,
+    [12, 6]
   )
 ]
 
 let charData = [
   ['气', qiData],
-  ['月', yueData]
+  ['月', yueData],
+  ['木', muData],
+  ['水', shuiData],
+  ['土', tuData]
 ]
+
 
 export default MySketch
