@@ -160,12 +160,6 @@ const MySketch = ({ className }) => {
     samplerRef.current = new Sampler(p5Inst, 5)
     p5bezierRef.current = initBezier(canvas)
 
-    for (let data of charData) {
-      data[1].forEach(char => {
-        char.init(p5Inst)
-      })
-    }
-
     setIsLoading(false)
 
     p5Inst.getAudioContext().suspend()
@@ -189,15 +183,13 @@ const MySketch = ({ className }) => {
       cnt += 1
     }
 
-    charData[globalIntRef.current][1].forEach(char => {
-      char.draw(
-        p5Inst,
-        [canvasSizeRef.current[0] / gridSize, canvasSizeRef.current[1] / gridSize, gridSize],
-        data.loudness,
-        data.centroid,
-        colorOn
-      )
-    })
+    charData[globalIntRef.current].draw(
+      p5Inst,
+      [canvasSizeRef.current[0] / gridSize, canvasSizeRef.current[1] / gridSize, gridSize],
+      data.loudness,
+      data.centroid,
+      colorOn
+    )
 
     if (takePic && cnt >= 15) {
       if (audioAllowed && lCnt <= lCntMax && cCnt <= cCntMax) {
@@ -263,7 +255,7 @@ const MySketch = ({ className }) => {
 
       {!isLoading && (
         <p className='absolute text-2xl font-bold top-20 left-1/2 -translate-x-1/2 z-10 song-font'>
-          {charData[globalInt][0]}
+          {charData[globalInt].name}
         </p>
       )}
 
