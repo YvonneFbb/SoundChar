@@ -165,17 +165,12 @@ class CharCompo {
                 p5Inst.endShape()
                 p5Inst.pop()
                 break
-            // case CharType.BEZIER:
-            //   p5Inst.noFill()
-            //   p5Inst.strokeWeight(weight)
-            //   p5bezier.draw(points, 'OPEN', 4)
-            //   break
         }
 
-        for (let i = 0; i < points.length; i++) {
-            p5Inst.fill('red')
-            p5Inst.ellipse(points[i][0], points[i][1], 5, 5)
-        }
+        // for (let i = 0; i < points.length; i++) {
+        //     p5Inst.fill('red')
+        //     p5Inst.ellipse(points[i][0], points[i][1], 5, 5)
+        // }
     }
 }
 
@@ -271,7 +266,7 @@ class Character {
                 [0xde, 0x9d, 0x41], // de9d41
             ]
         ];
-        this.alphaValues = [0.8, 0.85, 0.9, 0.95, 1.0];
+        this.alphaValues = [0.6, 0.65, 0.7, 0.75, 0.8];
         this.usedGroups = new Set();
         this.lastColorOn = false;
     }
@@ -420,7 +415,7 @@ let yueData = new Character(
                 } else {
                     w = p5Inst.map(centroid, 1000, 5000, 30, 10)
                 }
-                return w
+                return w < 0 ? 0 : w
             },
             CharType.BLOCK_W,
         ),
@@ -595,7 +590,13 @@ let tuData = new Character(
                 [12, 6]
             ],
             (p5Inst, loudness, centroid) => {
-                return DefaultWidth
+                let w
+                if (loudness < 50) {
+                    w = DefaultWidth
+                } else {
+                    w = p5Inst.map(loudness, 50, 150, DefaultWidth, 120)
+                }
+                return w
             },
             CharType.BLOCK_W,
         ),
@@ -606,8 +607,7 @@ let tuData = new Character(
                 [6.001, 0.5]
             ],
             (p5Inst, loudness, centroid) => {
-                let w = p5Inst.map(centroid, 0, 8000, DefaultWidth, 30)
-
+                let w = p5Inst.map(centroid, 0, 8000, DefaultWidth, 0)
                 return w
             },
             CharType.ARC,
@@ -625,7 +625,13 @@ let gongData = new Character(
                 [0, 0]
             ],
             (p5Inst, loudness, centroid) => {
-                return DefaultWidth
+                let w
+                if (loudness < 50) {
+                    w = DefaultWidth
+                } else {
+                    w = p5Inst.map(loudness, 50, 150, DefaultWidth, 150)
+                }
+                return w
             },
             CharType.BLOCK_W,
         ),
@@ -635,7 +641,13 @@ let gongData = new Character(
                 [4, 6.2]
             ],
             (p5Inst, loudness, centroid) => {
-                return DefaultWidth
+                let w
+                if (loudness < 50) {
+                    w = DefaultWidth
+                } else {
+                    w = p5Inst.map(loudness, 50, 150, DefaultWidth, 0)
+                }
+                return w
             },
             CharType.BLOCK_W_MID,
         ),
@@ -646,8 +658,7 @@ let gongData = new Character(
                 [4.002, 6.5]
             ],
             (p5Inst, loudness, centroid) => {
-                let w = p5Inst.map(centroid, 0, 8000, DefaultWidth, 30)
-
+                let w = p5Inst.map(centroid, 0, 8000, DefaultWidth, 80)
                 return w
             },
             CharType.ARC,
@@ -666,8 +677,7 @@ let riData = new Character(
                 [6.001, 0.5]
             ],
             (p5Inst, loudness, centroid) => {
-                let w = p5Inst.map(centroid, 0, 8000, DefaultWidth, 30)
-
+                let w = p5Inst.map(centroid, 0, 8000, DefaultWidth, 0)
                 return w
             },
             CharType.ARC,
@@ -679,8 +689,7 @@ let riData = new Character(
                 [6.001, 6]
             ],
             (p5Inst, loudness, centroid) => {
-                let w = p5Inst.map(centroid, 0, 8000, DefaultWidth, 30)
-
+                let w = p5Inst.map(centroid, 0, 8000, DefaultWidth, 200)
                 return w
             },
             CharType.ARC,
@@ -698,7 +707,8 @@ let banData = new Character(
                 [6, 0],
             ],
             (p5Inst, loudness, centroid) => {
-                return DefaultWidth
+                let w = p5Inst.map(centroid, 0, 5000, DefaultWidth, 0)
+                return w
             },
             CharType.BLOCK_W,
         ),
@@ -708,7 +718,13 @@ let banData = new Character(
                 [0, 5],
             ],
             (p5Inst, loudness, centroid) => {
-                return DefaultWidth
+                let w
+                if (loudness < 50) {
+                    w = DefaultWidth
+                } else {
+                    w = p5Inst.map(loudness, 50, 150, DefaultWidth, 120)
+                }
+                return w
             },
             CharType.BLOCK_W,
         ),
@@ -718,7 +734,8 @@ let banData = new Character(
                 [6, 5]
             ],
             (p5Inst, loudness, centroid) => {
-                return DefaultWidth
+                let w = p5Inst.map(centroid, 0, 8000, DefaultWidth, 120)
+                return w
             },
             CharType.BLOCK_W,
         ),
@@ -728,7 +745,8 @@ let banData = new Character(
                 [0, 12]
             ],
             (p5Inst, loudness, centroid) => {
-                return DefaultWidth
+                let w = p5Inst.map(centroid, 0, 8000, DefaultWidth, 120)
+                return w
             },
             CharType.BLOCK_W,
         ),
@@ -738,7 +756,13 @@ let banData = new Character(
                 [0, 7]
             ],
             (p5Inst, loudness, centroid) => {
-                return DefaultWidth
+                let w
+                if (loudness < 50) {
+                    w = DefaultWidth
+                } else {
+                    w = p5Inst.map(loudness, 50, 150, DefaultWidth, 120)
+                }
+                return w
             },
             CharType.BLOCK_W,
         ),
@@ -748,6 +772,7 @@ let banData = new Character(
 
 let charData = [
     qiData,
+    yueData,
     muData,
     shuiData,
     tuData,
