@@ -167,10 +167,10 @@ class CharCompo {
                 break
         }
 
-        for (let i = 0; i < points.length; i++) {
-            p5Inst.fill('red')
-            p5Inst.ellipse(points[i][0], points[i][1], 5, 5)
-        }
+        // for (let i = 0; i < points.length; i++) {
+        //     p5Inst.fill('red')
+        //     p5Inst.ellipse(points[i][0], points[i][1], 5, 5)
+        // }
     }
 }
 
@@ -451,8 +451,8 @@ let jinData = new Character(
     [
         new CharCompo(
             [
-                [4.5, 0.5],
-                [1, 4]
+                [4, 0.5],
+                [0.5, 4]
             ],
             (p5Inst, loudness, centroid) => {
                 let w
@@ -467,8 +467,8 @@ let jinData = new Character(
         ),
         new CharCompo(
             [
-                [8, 4],
-                [4.5, 0.5],
+                [7.5, 4],
+                [4, 0.5],
             ],
             (p5Inst, loudness, centroid) => {
                 let w
@@ -483,8 +483,8 @@ let jinData = new Character(
         ),
         new CharCompo(
             [
-                [2, 3.5],
-                [7, 3.5],
+                [1.5, 3.5],
+                [6.5, 3.5],
             ],
             (p5Inst, loudness, centroid) => {
                 let w = p5Inst.map(centroid, 0, 8000, DefaultWidth, 0)
@@ -494,8 +494,8 @@ let jinData = new Character(
         ),
         new CharCompo(
             [
-                [4.5, 4],
-                [4.5, 11],
+                [4, 4],
+                [4, 11],
             ],
             (p5Inst, loudness, centroid) => {
                 let w = p5Inst.map(centroid, 0, 8000, DefaultWidth, 0)
@@ -505,8 +505,8 @@ let jinData = new Character(
         ),
         new CharCompo(
             [
-                [2.5, 6.5],
-                [4.5, 8.5],
+                [2, 6.5],
+                [4, 8.5],
             ],
             (p5Inst, loudness, centroid) => {
                 let w
@@ -521,8 +521,8 @@ let jinData = new Character(
         ),
         new CharCompo(
             [
-                [4.5, 8.5],
-                [6.5, 6.5]
+                [4, 8.5],
+                [6, 6.5]
             ],
             (p5Inst, loudness, centroid) => {
                 let w
@@ -537,8 +537,8 @@ let jinData = new Character(
         ),
         new CharCompo(
             [
-                [2.5, 8.5],
-                [0.5, 10.5],
+                [2, 8.5],
+                [0, 10.5],
             ],
             (p5Inst, loudness, centroid) => {
                 let w = p5Inst.map(centroid, 0, 6000, DefaultWidth, 0)
@@ -548,8 +548,8 @@ let jinData = new Character(
         ),
         new CharCompo(
             [
-                [8.5, 10.5],
-                [6.5, 8.5],
+                [8, 10.5],
+                [6, 8.5],
             ],
             (p5Inst, loudness, centroid) => {
                 let w = p5Inst.map(centroid, 0, 6000, DefaultWidth, 0)
@@ -559,8 +559,8 @@ let jinData = new Character(
         ),
         new CharCompo(
             [
-                [1, 13],
-                [8, 13]
+                [0.5, 13],
+                [7.5, 13]
             ],
             (p5Inst, loudness, centroid) => {
                 let w
@@ -574,7 +574,7 @@ let jinData = new Character(
             CharType.BLOCK_W,
         ),
     ],
-    [9, 13]
+    [8, 13]
 )
 
 
@@ -998,6 +998,252 @@ let yanData = new Character(
     [6, 12]
 )
 
+let caoData = new Character(
+    "草",
+    [
+        new CharCompo(
+            [
+                [0, 5],
+                [6, 5]
+            ],
+            (p5Inst, loudness, centroid) => {
+                let w = p5Inst.map(centroid, 0, 8000, DefaultWidth, 100)
+                return w
+            },
+            CharType.BLOCK_W,
+        ),
+        new CharCompo(
+            [
+                [0, 1],
+                [0, 5]
+            ],
+            (p5Inst, loudness, centroid) => {
+                loudness = p5Inst.map(loudness, 0, 150, 1, 2)
+                centroid = p5Inst.map(centroid, 0, 8000, 1, 1.2)
+                let w = p5Inst.map(loudness * centroid, 1, 2.4, DefaultWidth, 100)
+                return w
+            },
+            CharType.BLOCK_W,
+        ),
+        new CharCompo(
+            [
+                [6, 5],
+                [6, 1]
+            ],
+            (p5Inst, loudness, centroid) => {
+                loudness = p5Inst.map(loudness, 0, 150, 1, 2)
+                centroid = p5Inst.map(centroid, 0, 8000, 1, 1.2)
+                let w = p5Inst.map(loudness * centroid, 1, 2.4, DefaultWidth, 100)
+                return w
+            },
+            CharType.BLOCK_W,
+        ),
+        new CharCompo(
+            [
+                [3, 0],
+                [3, 12]
+            ],
+            (p5Inst, loudness, centroid) => {
+                loudness = p5Inst.map(loudness, 0, 150, 1, 1.2)
+                centroid = p5Inst.map(centroid, 0, 8000, 1, 3)
+                let w = p5Inst.map(loudness * centroid, 1, 3.6, DefaultWidth, 0)
+                return w
+            },
+            CharType.BLOCK_W_MID,
+        ),
+    ],
+    [6, 12]
+)
+
+let shiData = new Character(
+    "石",
+    [
+        new CharCompo(
+            [
+                [8, 0],
+                [0, 0],
+            ],
+            (p5Inst, loudness, centroid) => {
+                loudness = p5Inst.map(loudness, 0, 150, 1, 3)
+                centroid = p5Inst.map(centroid, 0, 8000, 1, 1.2)
+                let w = p5Inst.map(loudness * centroid, 1, 3.6, DefaultWidth, 350)
+                return w
+            },
+            CharType.BLOCK_W,
+        ),
+        new CharCompo(
+            [
+                [0, 0],
+                [0, 12]
+            ],
+            (p5Inst, loudness, centroid) => {
+                loudness = p5Inst.map(loudness, 0, 150, 1, 1.2)
+                centroid = p5Inst.map(centroid, 0, 8000, 1, 3)
+                let w = p5Inst.map(loudness * centroid, 1, 3.6, DefaultWidth, 200)
+                return w
+            },
+            CharType.BLOCK_W,
+        ),
+        new CharCompo(
+            [
+                [2, 5.001],
+                [7, 5],
+                [2, 4.999]
+            ],
+            (p5Inst, loudness, centroid) => {
+                let w = p5Inst.map(loudness, 0, 150, DefaultWidth, 0)
+                return w
+            },
+            CharType.ARC,
+        )
+    ],
+    [8, 12]
+)
+
+let mu2Data = new Character(
+    "目",
+    [
+        new CharCompo(
+            [
+                [5, 3],
+                [5, 3.001],
+                [5.001, 3]
+            ],
+            (p5Inst, loudness, centroid) => {
+                let w = p5Inst.map(loudness, 0, 150, DefaultWidth, 60)
+                return w
+            },
+            CharType.ARC,
+        ),
+        new CharCompo(
+            [
+                [0.5, 3.2],
+                [5, 0],
+                [10, 3.2]
+            ],
+            (p5Inst, loudness, centroid) => {
+                let w = p5Inst.map(centroid, 0, 8000, DefaultWidth, 0)
+                return w
+            },
+            CharType.ARC,
+        ),
+        new CharCompo(
+            [
+                [0.5, 2.8],
+                [5, 6],
+                [10, 2.8]
+            ],
+            (p5Inst, loudness, centroid) => {
+                let w = p5Inst.map(centroid, 0, 8000, DefaultWidth, 0)
+                return w
+            },
+            CharType.ARC,
+        ),
+
+    ],
+    [10, 6]
+)
+
+let yiData = new Character(
+    "衣",
+    [
+        new CharCompo(
+            [
+                [3.5, 0],
+                [3.5, 1.5]
+            ],
+            (p5Inst, loudness, centroid) => {
+                let w = p5Inst.map(loudness, 0, 150, DefaultWidth, 0)
+                return w
+            },
+            CharType.BLOCK_W_MID,
+        ),
+        new CharCompo(
+            [
+                [3.5, 0.8],
+                [-0.35, 4.65],
+            ],
+            (p5Inst, loudness, centroid) => {
+                loudness = p5Inst.map(loudness, 0, 150, 1, 2)
+                centroid = p5Inst.map(centroid, 0, 8000, 1, 1.2)
+                let w = p5Inst.map(loudness * centroid, 1, 2.4, DefaultWidth, 50)
+                return w
+            },
+            CharType.BLOCK_W,
+        ),
+        new CharCompo(
+            [
+                [7.35, 4.65],
+                [3.5, 0.8],
+            ],
+            (p5Inst, loudness, centroid) => {
+                loudness = p5Inst.map(loudness, 0, 150, 1, 2)
+                centroid = p5Inst.map(centroid, 0, 8000, 1, 1.2)
+                let w = p5Inst.map(loudness * centroid, 1, 2.4, DefaultWidth, 50)
+                return w
+            },
+            CharType.BLOCK_W,
+        ),
+        // new CharCompo(
+        //     [
+        //         [0, 5],
+        //         [3.5, 1.5],
+        //         [7, 5]
+        //     ],
+        //     (p5Inst, loudness, centroid) => {
+        //         loudness = p5Inst.map(loudness, 0, 150, 1, 2)
+        //         centroid = p5Inst.map(centroid, 0, 8000, 1, 1.2)
+        //         let w = p5Inst.map(loudness * centroid, 1, 2.4, DefaultWidth, 50)
+        //         return w
+        //     },
+        //     CharType.POLYLINE,
+        // ),
+        new CharCompo(
+            [
+                [0, 7.5],
+                [1.75, 5.75],
+                [3.5, 7.5],
+                [5.25, 5.75],
+                [7, 7.5]
+            ],
+            (p5Inst, loudness, centroid) => {
+                let w = p5Inst.map(centroid, 0, 8000, DefaultWidth, 0)
+                return w
+            },
+            CharType.POLYLINE,
+        ),
+        new CharCompo(
+            [
+                [1, 6],
+                [1, 12]
+
+            ],
+            (p5Inst, loudness, centroid) => {
+                loudness = p5Inst.map(loudness, 0, 150, 1, 1.1)
+                centroid = p5Inst.map(centroid, 0, 8000, 1, 2)
+                let w = p5Inst.map(loudness * centroid, 1, 2.2, DefaultWidth, 100)
+                return w
+            },
+            CharType.BLOCK_W,
+        ),
+        new CharCompo(
+            [
+                [1, 12],
+                [5, 12]
+            ],
+            (p5Inst, loudness, centroid) => {
+                loudness = p5Inst.map(loudness, 0, 150, 1, 2)
+                centroid = p5Inst.map(centroid, 0, 8000, 1, 1.1)
+                let w = p5Inst.map(loudness * centroid, 1, 2.2, DefaultWidth, 100)
+                return w
+            },
+            CharType.BLOCK_W,
+        )
+    ],
+    [7, 12]
+)
+
+
 let charData = [
     qiData,
     yueData,
@@ -1008,7 +1254,11 @@ let charData = [
     gongData,
     riData,
     banData,
-    yanData
+    yanData,
+    caoData,
+    shiData,
+    mu2Data,
+    yiData
 ]
 
 export { charData, DefaultWidth, CharType }

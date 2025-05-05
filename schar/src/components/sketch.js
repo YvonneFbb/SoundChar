@@ -87,7 +87,7 @@ const LRControlButtons = ({ onIncrement, onDecrement }) => (
         </svg>
       </button>
     </div>
-    <div className='absolute top-1/2 right-32 -translate-x-1/2 -translate-y-1/2 z-10'>
+    <div className='absolute top-1/2 right-24 -translate-x-1/2 -translate-y-1/2 z-10'>
       <button onClick={onIncrement}>
         <svg width='40' height='40' viewBox='0 0 100 100'>
           {/* 这里的三角形顶点在 (80,50) 为指向右边，
@@ -261,7 +261,7 @@ const MySketch = ({ className }) => {
 
       {!isLoading && (
         <button
-          className='absolute text-xl font-bold bottom-1/4 left-1/2 -translate-x-1/2 flex gap-8 z-10'
+          className='absolute text-xl font-bold bottom-1/4 left-1/2 -translate-x-1/2 translate-y-8 flex gap-8 z-10'
           onClick={async () => {
             if (!audioAllowed) {
               // 如果音频未开启，则启动音频
