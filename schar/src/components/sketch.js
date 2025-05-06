@@ -27,7 +27,7 @@ const Sketch = dynamic(
 )
 
 class Sampler {
-  constructor(p5Inst, sampleInterval = 300) {
+  constructor (p5Inst, sampleInterval = 300) {
     this.mic = new window.p5.AudioIn()
     this.fft = new window.p5.FFT(0.8, 64)
     this.fft.setInput(this.mic)
@@ -40,7 +40,7 @@ class Sampler {
     this.gate = 50
   }
 
-  async enable() {
+  async enable () {
     try {
       await this.p5.userStartAudio()
       await navigator.mediaDevices.getUserMedia({ audio: true })
@@ -54,13 +54,13 @@ class Sampler {
     }
   }
 
-  async stop() {
+  async stop () {
     await this.p5.userStartAudio()
     await navigator.mediaDevices.getUserMedia({ audio: true })
     this.mic.stop()
   }
 
-  sample() {
+  sample () {
     const currentTime = this.p5.millis()
     if (currentTime - this.lastSampleTime >= this.sampleInterval) {
       this.lastSampleTime = currentTime
@@ -77,7 +77,12 @@ const LRControlButtons = ({ onIncrement, onDecrement }) => (
   <div>
     <div className='absolute top-1/2 left-8 md:left-32 -translate-x-1/2 -translate-y-1/2 z-10'>
       <button onClick={onDecrement}>
-        <svg width='30' height='30' className='md:w-10 md:h-10' viewBox='0 0 100 100'>
+        <svg
+          width='30'
+          height='30'
+          className='md:w-10 md:h-10'
+          viewBox='0 0 100 100'
+        >
           {/* 这里的三角形顶点在 (20,50) 为指向左边，
               另外两个点在 (80,20) 和 (80,80)，构成一个较为接近正三角形的形状 */}
           <polygon
@@ -91,7 +96,12 @@ const LRControlButtons = ({ onIncrement, onDecrement }) => (
     </div>
     <div className='absolute top-1/2 right-4 md:right-24 -translate-x-1/2 -translate-y-1/2 z-10'>
       <button onClick={onIncrement}>
-        <svg width='30' height='30' className='md:w-10 md:h-10' viewBox='0 0 100 100'>
+        <svg
+          width='30'
+          height='30'
+          className='md:w-10 md:h-10'
+          viewBox='0 0 100 100'
+        >
           {/* 这里的三角形顶点在 (80,50) 为指向右边，
               另外两个点在 (20,20) 和 (20,80) */}
           <polygon
@@ -121,34 +131,67 @@ const MySketch = ({ className }) => {
   const resizeTimeoutId = useRef(null)
 
   const handleResize = useCallback(() => {
-    if (resizeTimeoutId.current) clearTimeout(resizeTimeoutId.current);
+    if (resizeTimeoutId.current) clearTimeout(resizeTimeoutId.current)
     resizeTimeoutId.current = setTimeout(() => {
-      const { width, height } = containerRef.current.getBoundingClientRect();
-      setCanvasSize([width, height]);
-      resizeTimeoutId.current = null;
-    }, 100);
+      const { width, height } = containerRef.current.getBoundingClientRect()
+      setCanvasSize([width, height])
+      resizeTimeoutId.current = null
+    }, 100)
   }, [])
 
-  const drawGrid = useCallback((p5Inst, gridSize = 30) => {
-    p5Inst.push();
-    p5Inst.stroke(220);
-    p5Inst.strokeWeight(0.5);
+  const drawGrid = useCallback((p5Inst, gridSize = 30, currentChar = null) => {
+    p5Inst.push()
+    p5Inst.stroke(220)
+    p5Inst.strokeWeight(0.5)
+
+    // 计算画布中心
+    const centerX = p5Inst.width / 2
+    const centerY = p5Inst.height / 2
+
+    // 计算网格偏移量，使网格与Character中心对齐
+    let offsetX = 0
+    let offsetY = 0
+
+    // 如果提供了当前字符，则计算偏移量使网格与字符中心对齐
+    if (currentChar) {
+      // 计算字符中心位置的小数部分
+      const charCenterX = ((p5Inst.width / gridSize) - currentChar.size[0]) / 2
+      const charCenterY = ((p5Inst.height / gridSize) - currentChar.size[1]) / 2
+
+      // 计算偏移量（小数部分 * 网格大小）
+      offsetX = (charCenterX - Math.floor(charCenterX)) * gridSize
+      offsetY = (charCenterY - Math.floor(charCenterY)) * gridSize
+    }
 
     // 使用单次绘制调用替代多次循环绘制
-    p5Inst.beginShape(p5Inst.LINES);
+    p5Inst.beginShape(p5Inst.LINES)
 
-    // 水平线和垂直线
-    for (let y = 0; y < p5Inst.height; y += gridSize) {
-      p5Inst.vertex(0, y);
-      p5Inst.vertex(p5Inst.width, y);
+    // 从中心向两侧绘制水平线
+    for (let y = centerY; y >= 0; y -= gridSize) {
+      const adjustedY = y - offsetY
+      p5Inst.vertex(0, adjustedY)
+      p5Inst.vertex(p5Inst.width, adjustedY)
     }
-    for (let x = 0; x < p5Inst.width; x += gridSize) {
-      p5Inst.vertex(x, 0);
-      p5Inst.vertex(x, p5Inst.height);
+    for (let y = centerY + gridSize; y <= p5Inst.height; y += gridSize) {
+      const adjustedY = y - offsetY
+      p5Inst.vertex(0, adjustedY)
+      p5Inst.vertex(p5Inst.width, adjustedY)
     }
 
-    p5Inst.endShape();
-    p5Inst.pop();
+    // 从中心向两侧绘制垂直线
+    for (let x = centerX; x >= 0; x -= gridSize) {
+      const adjustedX = x - offsetX
+      p5Inst.vertex(adjustedX, 0)
+      p5Inst.vertex(adjustedX, p5Inst.height)
+    }
+    for (let x = centerX + gridSize; x <= p5Inst.width; x += gridSize) {
+      const adjustedX = x - offsetX
+      p5Inst.vertex(adjustedX, 0)
+      p5Inst.vertex(adjustedX, p5Inst.height)
+    }
+
+    p5Inst.endShape()
+    p5Inst.pop()
   }, [])
 
   useEffect(() => {
@@ -199,9 +242,8 @@ const MySketch = ({ className }) => {
     }
     p5Inst.background(255)
     // 只在非移动设备上显示网格
-    // if (!isMobile) {
-      drawGrid(p5Inst, DefaultWidth)
-    // }
+    const currentChar = charData[globalIntRef.current]
+    drawGrid(p5Inst, DefaultWidth, currentChar)
 
     const data = samplerRef.current?.sample(p5Inst)
 
@@ -213,7 +255,11 @@ const MySketch = ({ className }) => {
 
     charData[globalIntRef.current].draw(
       p5Inst,
-      [canvasSizeRef.current[0] / gridSize, canvasSizeRef.current[1] / gridSize, gridSize],
+      [
+        canvasSizeRef.current[0] / gridSize,
+        canvasSizeRef.current[1] / gridSize,
+        gridSize
+      ],
       data.loudness,
       data.centroid,
       colorOn
@@ -257,28 +303,37 @@ const MySketch = ({ className }) => {
       )}
 
       {!isLoading && (
-        <div className={`${isMobile ? 'absolute top-16 right-6' : 'fixed top-[80px] right-4 transform -translate-y-1/2'} z-10`}>
+        <div
+          className={`${
+            isMobile
+              ? 'absolute top-16 right-6'
+              : 'fixed top-[80px] right-4 transform -translate-y-1/2'
+          } z-10`}
+        >
           <div
             onClick={() => setColorOn(!colorOn)}
             className='relative w-7 h-4 md:w-8 md:h-5 flex items-center rounded-full p-1 cursor-pointer overflow-hidden border-[1px] border-black'
           >
             {/* 背景层 */}
             <div
-              className={`absolute inset-0 transition-opacity ${colorOn
-                ? 'opacity-100 bg-gradient-to-tr from-[#0c75ff] to-[#f6c7ac]'
-                : 'opacity-0 bg-gradient-to-tr from-[#0c75ff] to-[#f6c7ac]'
-                }`}
+              className={`absolute inset-0 transition-opacity ${
+                colorOn
+                  ? 'opacity-100 bg-gradient-to-tr from-[#0c75ff] to-[#f6c7ac]'
+                  : 'opacity-0 bg-gradient-to-tr from-[#0c75ff] to-[#f6c7ac]'
+              }`}
             />
             <div
-              className={`absolute inset-0 transition-opacity bg-black ${colorOn ? 'opacity-0' : 'opacity-100'
-                }`}
+              className={`absolute inset-0 transition-opacity bg-black ${
+                colorOn ? 'opacity-0' : 'opacity-100'
+              }`}
             />
             {/* 圆形滑块 */}
             <div
-              className={`relative bg-white w-3 h-3 md:w-4 md:h-4 rounded-full shadow-md transform transition-transform ${colorOn
-                ? 'translate-x-[8px] md:translate-x-[9px]'
-                : 'translate-x-[-3px]'
-                }`}
+              className={`relative bg-white w-3 h-3 md:w-4 md:h-4 rounded-full shadow-md transform transition-transform ${
+                colorOn
+                  ? 'translate-x-[8px] md:translate-x-[9px]'
+                  : 'translate-x-[-3px]'
+              }`}
             ></div>
           </div>
         </div>

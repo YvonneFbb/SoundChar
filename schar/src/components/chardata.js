@@ -90,7 +90,7 @@ class CharCompo {
             distance: 0
         }
         this.arc = null
-        
+
         // 添加缓存相关属性
         this.cachedTransformedPoints = null;
         this.cachedWeight = null;
@@ -128,36 +128,36 @@ class CharCompo {
     // 计算转换后的点坐标 (新函数)
     getTransformedPoints(orig) {
         // 检查是否需要重新计算 (如果orig发生变化)
-        const origChanged = !this.lastOrig || 
-                           this.lastOrig[0] !== orig[0] || 
-                           this.lastOrig[1] !== orig[1] || 
+        const origChanged = !this.lastOrig ||
+                           this.lastOrig[0] !== orig[0] ||
+                           this.lastOrig[1] !== orig[1] ||
                            this.lastOrig[2] !== orig[2];
-        
+
         if (origChanged || !this.cachedTransformedPoints) {
             this.cachedTransformedPoints = this.points.map(p => [
-                p[0] * orig[2] + orig[0], 
+                p[0] * orig[2] + orig[0],
                 p[1] * orig[2] + orig[1]
             ]);
             this.lastOrig = [...orig];
         }
-        
+
         return this.cachedTransformedPoints;
     }
 
     // 计算组件权重 (新函数)
     calculateWeight(p5Inst, loudness, centroid) {
         // 检查参数是否发生变化
-        if (this.lastLoudness === loudness && 
-            this.lastCentroid === centroid && 
+        if (this.lastLoudness === loudness &&
+            this.lastCentroid === centroid &&
             this.cachedWeight !== null) {
             return this.cachedWeight;
         }
-        
+
         // 计算并缓存新的权重值
         this.lastLoudness = loudness;
         this.lastCentroid = centroid;
         this.cachedWeight = this.mapfunc(p5Inst, loudness, centroid);
-        
+
         return this.cachedWeight;
     }
 
@@ -328,7 +328,7 @@ class Character {
         this.alphaValues = [0.6, 0.65, 0.7, 0.75, 0.8];
         this.usedGroups = new Set();
         this.lastColorOn = false;
-        
+
         // 增加缓存相关属性
         this.lastParams = {
             loudness: null,
@@ -396,7 +396,7 @@ class Character {
         }
 
         // 检查参数是否发生变化
-        const paramsChanged = 
+        const paramsChanged =
             this.lastParams.loudness !== loudness ||
             this.lastParams.centroid !== centroid ||
             this.lastParams.colorOn !== colorOn ||
@@ -404,14 +404,14 @@ class Character {
             this.lastParams.canvas[0] !== canvas[0] ||
             this.lastParams.canvas[1] !== canvas[1] ||
             this.lastParams.canvas[2] !== canvas[2];
-            
+
         // 颜色模式变化时重新分配颜色
         if (colorOn !== this.lastParams.colorOn) {
             if (colorOn) {
                 this.assignRandomColors(p5Inst);
             }
         }
-        
+
         // 更新参数缓存
         this.lastParams = {
             loudness,
@@ -419,11 +419,11 @@ class Character {
             colorOn,
             canvas: [...canvas]
         };
-        
-        // 计算原点坐标 (用于定位)
+
+        // 计算原点坐标 (用于定位) - 优先确保Character完全居中
         const orig = [
-            Math.ceil((canvas[0] - this.size[0]) / 2) * canvas[2],
-            Math.floor((canvas[1] - this.size[1]) / 2) * canvas[2],
+            ((canvas[0] - this.size[0]) / 2) * canvas[2], // 移除Math.ceil，确保精确居中
+            ((canvas[1] - this.size[1]) / 2) * canvas[2], // 移除Math.floor，确保精确居中
             canvas[2],
         ];
 
