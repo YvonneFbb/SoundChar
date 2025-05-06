@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, useState, useEffect } from 'react'
+import React, { useRef, useState, useEffect, useCallback } from 'react'
 import dynamic from 'next/dynamic'
 
 import { charData, DefaultWidth } from './chardata'
@@ -38,15 +38,20 @@ class Sampler {
     this.loudness = 0
     this.centroid = 0
     this.gate = 50
-    this.active = false
   }
 
   async enable() {
-    await this.p5.userStartAudio()
-    await navigator.mediaDevices.getUserMedia({ audio: true })
-    this.mic.start(() => {
-      this.mic.amp(0.8)
-    })
+    try {
+      await this.p5.userStartAudio()
+      await navigator.mediaDevices.getUserMedia({ audio: true })
+      this.mic.start(() => {
+        this.mic.amp(0.8)
+      })
+      return true
+    } catch (error) {
+      console.error('无法启用音频:', error)
+      return false
+    }
   }
 
   async stop() {
@@ -59,12 +64,10 @@ class Sampler {
     const currentTime = this.p5.millis()
     if (currentTime - this.lastSampleTime >= this.sampleInterval) {
       this.lastSampleTime = currentTime
-      const spectrum = this.fft.analyze()
+      this.fft.analyze()
 
       this.loudness = this.fft.getEnergy('lowMid', 'highMid')
       this.centroid = this.fft.getCentroid()
-
-      this.active = this.loudness > this.gate
     }
     return { loudness: this.loudness, centroid: this.centroid }
   }
@@ -115,29 +118,38 @@ const MySketch = ({ className }) => {
   const globalIntRef = useRef(globalInt)
   const containerRef = useRef(null)
   const canvasSizeRef = useRef(canvasSize)
+  const resizeTimeoutId = useRef(null)
 
-  const handleResize = () => {
-    const { width, height } = containerRef.current.getBoundingClientRect()
-    setCanvasSize([width, height])
-  }
+  const handleResize = useCallback(() => {
+    if (resizeTimeoutId.current) clearTimeout(resizeTimeoutId.current);
+    resizeTimeoutId.current = setTimeout(() => {
+      const { width, height } = containerRef.current.getBoundingClientRect();
+      setCanvasSize([width, height]);
+      resizeTimeoutId.current = null;
+    }, 100);
+  }, [])
 
-  const drawGrid = (p5Inst, gridSize = 30) => {
+  const drawGrid = useCallback((p5Inst, gridSize = 30) => {
     p5Inst.push();
-    p5Inst.stroke(220); // 浅灰色网格线
+    p5Inst.stroke(220);
     p5Inst.strokeWeight(0.5);
 
-    // 绘制水平线
+    // 使用单次绘制调用替代多次循环绘制
+    p5Inst.beginShape(p5Inst.LINES);
+
+    // 水平线和垂直线
     for (let y = 0; y < p5Inst.height; y += gridSize) {
-      p5Inst.line(0, y, p5Inst.width, y);
+      p5Inst.vertex(0, y);
+      p5Inst.vertex(p5Inst.width, y);
     }
-
-    // 绘制垂直线
     for (let x = 0; x < p5Inst.width; x += gridSize) {
-      p5Inst.line(x, 0, x, p5Inst.height);
+      p5Inst.vertex(x, 0);
+      p5Inst.vertex(x, p5Inst.height);
     }
 
+    p5Inst.endShape();
     p5Inst.pop();
-  }
+  }, [])
 
   useEffect(() => {
     globalIntRef.current = globalInt
@@ -160,7 +172,10 @@ const MySketch = ({ className }) => {
   useEffect(() => {
     handleResize()
     window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      if (resizeTimeoutId.current) clearTimeout(resizeTimeoutId.current)
+    }
   }, [])
 
   const setup = (p5Inst, canvasParentRef) => {
@@ -184,11 +199,12 @@ const MySketch = ({ className }) => {
     }
     p5Inst.background(255)
     // 只在非移动设备上显示网格
-    if (!isMobile) {
+    // if (!isMobile) {
       drawGrid(p5Inst, DefaultWidth)
-    }
+    // }
 
     const data = samplerRef.current?.sample(p5Inst)
+
     if (takePic && audioAllowed && lCnt <= lCntMax && cCnt <= cCntMax) {
       data.centroid = cCnt * 1000
       data.loudness = lCnt * 10
@@ -241,7 +257,7 @@ const MySketch = ({ className }) => {
       )}
 
       {!isLoading && (
-        <div className='fixed top-[60px] md:top-[80px] right-4 transform -translate-y-1/2'>
+        <div className={`${isMobile ? 'absolute top-16 right-6' : 'fixed top-[80px] right-4 transform -translate-y-1/2'} z-10`}>
           <div
             onClick={() => setColorOn(!colorOn)}
             className='relative w-7 h-4 md:w-8 md:h-5 flex items-center rounded-full p-1 cursor-pointer overflow-hidden border-[1px] border-black'
@@ -259,11 +275,10 @@ const MySketch = ({ className }) => {
             />
             {/* 圆形滑块 */}
             <div
-              className={`relative bg-white w-3 h-3 md:w-4 md:h-4 rounded-full shadow-md transform transition-transform ${
-                colorOn
-                  ? 'translate-x-[8px] md:translate-x-[9px]'
-                  : 'translate-x-[-3px]'
-              }`}
+              className={`relative bg-white w-3 h-3 md:w-4 md:h-4 rounded-full shadow-md transform transition-transform ${colorOn
+                ? 'translate-x-[8px] md:translate-x-[9px]'
+                : 'translate-x-[-3px]'
+                }`}
             ></div>
           </div>
         </div>

@@ -61,6 +61,22 @@ function calculateArc(points) {
     }
 }
 
+// 添加记忆化函数工具
+function memoize(fn) {
+  const cache = new Map();
+  return function(...args) {
+    // 使用JSON.stringify作为缓存键
+    const key = JSON.stringify(args);
+    if (!cache.has(key)) {
+      cache.set(key, fn.apply(this, args));
+    }
+    return cache.get(key);
+  };
+}
+
+// 优化弧形计算函数，使用记忆化包装
+const calculateArcMemoized = memoize(calculateArc);
+
 class CharCompo {
     constructor(points, mapfunc, type) {
         this.points = points
@@ -74,6 +90,13 @@ class CharCompo {
             distance: 0
         }
         this.arc = null
+        
+        // 添加缓存相关属性
+        this.cachedTransformedPoints = null;
+        this.cachedWeight = null;
+        this.lastLoudness = null;
+        this.lastCentroid = null;
+        this.lastOrig = null;
     }
 
     init(p5Inst) {
@@ -96,16 +119,52 @@ class CharCompo {
                     console.error('Arc needs 3 points')
                     break
                 }
-                this.arc = calculateArc(this.points)
+                // 使用记忆化版本计算弧线
+                this.arc = calculateArcMemoized(this.points)
                 break
         }
     }
 
+    // 计算转换后的点坐标 (新函数)
+    getTransformedPoints(orig) {
+        // 检查是否需要重新计算 (如果orig发生变化)
+        const origChanged = !this.lastOrig || 
+                           this.lastOrig[0] !== orig[0] || 
+                           this.lastOrig[1] !== orig[1] || 
+                           this.lastOrig[2] !== orig[2];
+        
+        if (origChanged || !this.cachedTransformedPoints) {
+            this.cachedTransformedPoints = this.points.map(p => [
+                p[0] * orig[2] + orig[0], 
+                p[1] * orig[2] + orig[1]
+            ]);
+            this.lastOrig = [...orig];
+        }
+        
+        return this.cachedTransformedPoints;
+    }
+
+    // 计算组件权重 (新函数)
+    calculateWeight(p5Inst, loudness, centroid) {
+        // 检查参数是否发生变化
+        if (this.lastLoudness === loudness && 
+            this.lastCentroid === centroid && 
+            this.cachedWeight !== null) {
+            return this.cachedWeight;
+        }
+        
+        // 计算并缓存新的权重值
+        this.lastLoudness = loudness;
+        this.lastCentroid = centroid;
+        this.cachedWeight = this.mapfunc(p5Inst, loudness, centroid);
+        
+        return this.cachedWeight;
+    }
+
     draw(p5Inst, orig, loudness, centroid, colorOn) {
-        const weight = this.mapfunc(p5Inst, loudness, centroid)
-        let points = this.points.map(p => {
-            return [p[0] * orig[2] + orig[0], p[1] * orig[2] + orig[1]]
-        })
+        // 使用缓存函数获取转换后的点和权重
+        const weight = this.calculateWeight(p5Inst, loudness, centroid);
+        const points = this.getTransformedPoints(orig);
 
         if (colorOn) {
             p5Inst.fill(this.color);
@@ -269,13 +328,25 @@ class Character {
         this.alphaValues = [0.6, 0.65, 0.7, 0.75, 0.8];
         this.usedGroups = new Set();
         this.lastColorOn = false;
+        
+        // 增加缓存相关属性
+        this.lastParams = {
+            loudness: null,
+            centroid: null,
+            colorOn: null,
+            canvas: null
+        };
     }
 
     init(p5Inst) {
-        this.components.forEach(component => {
-            component.init(p5Inst);
-        });
-        this.initialized = true;
+        if (!this.initialized) {
+            // 批量初始化所有组件
+            for (let i = 0; i < this.components.length; i++) {
+                this.components[i].init(p5Inst);
+            }
+            this.assignRandomColors(p5Inst);
+            this.initialized = true;
+        }
     }
 
     assignRandomColors(p5Inst) {
@@ -319,25 +390,47 @@ class Character {
     }
 
     draw(p5Inst, canvas, loudness, centroid, colorOn) {
+        // 确保组件已初始化
         if (!this.initialized) {
             this.init(p5Inst);
         }
 
-        // 只在从 false 切换到 true 时重新分配颜色
-        if (colorOn && !this.lastColorOn) {
-            this.assignRandomColors(p5Inst);
+        // 检查参数是否发生变化
+        const paramsChanged = 
+            this.lastParams.loudness !== loudness ||
+            this.lastParams.centroid !== centroid ||
+            this.lastParams.colorOn !== colorOn ||
+            !this.lastParams.canvas ||
+            this.lastParams.canvas[0] !== canvas[0] ||
+            this.lastParams.canvas[1] !== canvas[1] ||
+            this.lastParams.canvas[2] !== canvas[2];
+            
+        // 颜色模式变化时重新分配颜色
+        if (colorOn !== this.lastParams.colorOn) {
+            if (colorOn) {
+                this.assignRandomColors(p5Inst);
+            }
         }
-        this.lastColorOn = colorOn; // 更新状态
-
+        
+        // 更新参数缓存
+        this.lastParams = {
+            loudness,
+            centroid,
+            colorOn,
+            canvas: [...canvas]
+        };
+        
+        // 计算原点坐标 (用于定位)
         const orig = [
             Math.ceil((canvas[0] - this.size[0]) / 2) * canvas[2],
             Math.floor((canvas[1] - this.size[1]) / 2) * canvas[2],
             canvas[2],
         ];
 
-        this.components.forEach(component => {
-            component.draw(p5Inst, orig, loudness, centroid, colorOn);
-        });
+        // 绘制所有组件
+        for (let i = 0; i < this.components.length; i++) {
+            this.components[i].draw(p5Inst, orig, loudness, centroid, colorOn);
+        }
     }
 }
 
@@ -1184,20 +1277,6 @@ let yiData = new Character(
             },
             CharType.BLOCK_W,
         ),
-        // new CharCompo(
-        //     [
-        //         [0, 5],
-        //         [3.5, 1.5],
-        //         [7, 5]
-        //     ],
-        //     (p5Inst, loudness, centroid) => {
-        //         loudness = p5Inst.map(loudness, 0, 150, 1, 2)
-        //         centroid = p5Inst.map(centroid, 0, 8000, 1, 1.2)
-        //         let w = p5Inst.map(loudness * centroid, 1, 2.4, DefaultWidth, 50)
-        //         return w
-        //     },
-        //     CharType.POLYLINE,
-        // ),
         new CharCompo(
             [
                 [0, 7.5],
