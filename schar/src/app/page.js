@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Header from '@/components/header'
 import dynamic from 'next/dynamic'
 
@@ -10,21 +10,86 @@ const MySketch = dynamic(() => import('@/components/sketch'), {
 
 export default function Home () {
   const [showReference, setShowReference] = useState(false)
+  const [showIntro, setShowIntro] = useState(true)
+  const [isMobile, setIsMobile] = useState(false)
+
+  // 检测是否为移动设备并处理内容克隆
+  useEffect(() => {
+    const checkIfMobile = () => {
+      const isMobileView = window.innerWidth < 768
+      setIsMobile(isMobileView)
+      // 在移动设备上默认隐藏介绍内容
+      if (isMobileView) {
+        setShowIntro(false)
+      } else {
+        setShowIntro(true)
+      }
+    }
+
+    checkIfMobile()
+    window.addEventListener('resize', checkIfMobile)
+
+    // 克隆内容到移动端面板
+    const cloneContent = () => {
+      const sourceContent = document.getElementById('introContent')
+      const targetContent = document.getElementById('mobileIntroContent')
+
+      if (sourceContent && targetContent) {
+        // 克隆内容但保留原始ID
+        const clonedContent = sourceContent.cloneNode(true)
+
+        // 清空目标容器
+        while (targetContent.firstChild) {
+          targetContent.removeChild(targetContent.firstChild)
+        }
+
+        // 将克隆的子元素添加到目标容器
+        while (clonedContent.firstChild) {
+          targetContent.appendChild(clonedContent.firstChild)
+        }
+      }
+    }
+
+    // 在组件挂载和更新时克隆内容
+    const timer = setTimeout(cloneContent, 100)
+
+    return () => {
+      window.removeEventListener('resize', checkIfMobile)
+      clearTimeout(timer)
+    }
+  }, [])
+
   const toggleReference = () => {
     setShowReference(!showReference)
   }
 
+  const toggleIntro = () => {
+    setShowIntro(!showIntro)
+  }
+
   return (
     <div className='flex flex-col h-screen overflow-hidden'>
-      <Header onReferenceClick={toggleReference} />
+      {/* 在手机端隐藏整个 header */}
+      {!isMobile && <Header onReferenceClick={toggleReference} />}
 
-      {/* 主内容容器 */}
-      <div className='flex flex-1 overflow-hidden'>
-        {/* 引用面板 - 添加毛玻璃效果 */}
+      {/* 移动端介绍内容切换按钮 - 极简样式 */}
+      {isMobile && (
+        <button
+          onClick={toggleIntro}
+          className='absolute top-6 left-6 z-10 flex flex-col items-center justify-center'
+        >
+          <div className='w-5 h-0.5 bg-black mb-1.5'></div>
+          <div className='w-5 h-0.5 bg-black'></div>
+        </button>
+      )}
+
+      {/* 主内容容器 - 在手机端改为纵向排列 */}
+      <div className='flex flex-col md:flex-row flex-1 overflow-hidden'>
+        {/* 引用面板 - 添加毛玻璃效果 (在手机端隐藏) */}
         <div
           className={`absolute left-0 bottom-0 h-[calc(100%-3rem)] w-[calc(33.3%-8px)]
             bg-gray-200/30 backdrop-blur transition-transform
-            duration-300 ease-in-out z-20 ${
+            duration-300 ease-in-out z-20 hidden md:block ${
               showReference ? 'translate-x-0' : '-translate-x-full'
             }`}
         >
@@ -163,9 +228,13 @@ export default function Home () {
           </div>
         </div>
 
-        {/* 左栏滚动容器 */}
-        <div className='w-1/3 overflow-y-scroll custom-scrollbar'>
-          <article className='prose max-w-none flex-1 p-8'>
+        {/* 介绍内容容器 - 在PC端显示为左栏，在移动端可以通过按钮切换显示 */}
+        <div
+          className={`w-full md:w-1/3 overflow-y-scroll custom-scrollbar ${
+            isMobile ? 'hidden' : 'block'
+          }`}
+        >
+          <article id="introContent" className='prose max-w-none flex-1 p-8'>
             <h2 className='custom-bg relative font-bold text-center inline-block rounded-full px-2'>
               <span className='relative z-10'>
                 Early Chinese Characters in Sound Visualization
@@ -199,8 +268,7 @@ export default function Home () {
                 you want to make
               </li>
               <li>
-                Step 2: Select the Bezier curve adjustment axis to adjust the
-                symbol to be straight or round
+                Step 2: Observe how the symbol changes based on the sound input
               </li>
               <li>
                 Step 3: You can select the switch button to switch between
@@ -246,8 +314,61 @@ export default function Home () {
           </article>
         </div>
 
-        {/* 右栏画布容器 */}
-        <div className='w-2/3 h-full overflow-hidden'>
+        {/* 移动端介绍内容面板 - 使用滑动面板显示相同内容 */}
+        {isMobile && (
+          <div
+            className={`absolute left-0 bottom-0 h-full w-3/4 sm:w-1/2
+              bg-gray-200/30 backdrop-blur transition-transform
+              duration-300 ease-in-out z-30 ${
+                showIntro ? 'translate-x-0' : '-translate-x-full'
+              }`}
+          >
+            {/* 标题和关闭按钮容器 */}
+            <div className='sticky top-0 left-0 right-0 h-16 flex items-center justify-between px-4'>
+              {/* 标题 - 调整为更小的字体 */}
+              <h2 className='text-lg font-black text-[#0c75ff]'>
+                Introduction
+              </h2>
+              {/* 关闭按钮 */}
+              <button
+                onClick={toggleIntro}
+                className='text-4xl leading-none text-[#0c75ff] transition-colors'
+              >
+                &times;
+              </button>
+            </div>
+            <div className='overflow-y-auto no-scrollbar h-[calc(100%-4rem)]'>
+              {/* 使用克隆的内容，避免重复维护 */}
+              <div id="mobileIntroContent" className='px-4 mobile-content'>
+                {/* 这里的内容将通过JavaScript动态填充 */}
+              </div>
+
+              {/* 添加移动端特定的样式 */}
+              <style jsx>{`
+                .mobile-content :global(h2) {
+                  font-size: 0.9rem !important;
+                }
+                .mobile-content :global(p),
+                .mobile-content :global(li),
+                .mobile-content :global(em) {
+                  font-size: 0.75rem !important;
+                  line-height: 1.3 !important;
+                }
+                .mobile-content :global(ul) {
+                  margin-top: 0.5rem !important;
+                  margin-bottom: 0.5rem !important;
+                }
+                .mobile-content :global(h2) {
+                  margin-top: 0.75rem !important;
+                  margin-bottom: 0.5rem !important;
+                }
+              `}</style>
+            </div>
+          </div>
+        )}
+
+        {/* 右栏画布容器 - 在手机端占满宽度并设置最小高度 */}
+        <div className='w-full md:w-2/3 h-full min-h-[60vh] md:min-h-0 overflow-hidden'>
           <MySketch />
         </div>
       </div>

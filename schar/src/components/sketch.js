@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useRef, useState, useEffect } from 'react'
-import initBezier from 'p5bezier'
 import dynamic from 'next/dynamic'
 
 import { charData, DefaultWidth } from './chardata'
@@ -73,9 +72,9 @@ class Sampler {
 
 const LRControlButtons = ({ onIncrement, onDecrement }) => (
   <div>
-    <div className='absolute top-1/2 left-32 -translate-x-1/2 -translate-y-1/2 z-10'>
+    <div className='absolute top-1/2 left-8 md:left-32 -translate-x-1/2 -translate-y-1/2 z-10'>
       <button onClick={onDecrement}>
-        <svg width='40' height='40' viewBox='0 0 100 100'>
+        <svg width='30' height='30' className='md:w-10 md:h-10' viewBox='0 0 100 100'>
           {/* 这里的三角形顶点在 (20,50) 为指向左边，
               另外两个点在 (80,20) 和 (80,80)，构成一个较为接近正三角形的形状 */}
           <polygon
@@ -87,9 +86,9 @@ const LRControlButtons = ({ onIncrement, onDecrement }) => (
         </svg>
       </button>
     </div>
-    <div className='absolute top-1/2 right-24 -translate-x-1/2 -translate-y-1/2 z-10'>
+    <div className='absolute top-1/2 right-4 md:right-24 -translate-x-1/2 -translate-y-1/2 z-10'>
       <button onClick={onIncrement}>
-        <svg width='40' height='40' viewBox='0 0 100 100'>
+        <svg width='30' height='30' className='md:w-10 md:h-10' viewBox='0 0 100 100'>
           {/* 这里的三角形顶点在 (80,50) 为指向右边，
               另外两个点在 (20,20) 和 (20,80) */}
           <polygon
@@ -110,9 +109,9 @@ const MySketch = ({ className }) => {
   const [isLoading, setIsLoading] = useState(true)
   const [canvasSize, setCanvasSize] = useState([800, 800])
   const [colorOn, setColorOn] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
 
   const samplerRef = useRef()
-  const p5bezierRef = useRef()
   const globalIntRef = useRef(globalInt)
   const containerRef = useRef(null)
   const canvasSizeRef = useRef(canvasSize)
@@ -147,6 +146,17 @@ const MySketch = ({ className }) => {
     canvasSizeRef.current = canvasSize
   }, [canvasSize])
 
+  // 检测是否为移动设备
+  useEffect(() => {
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+
+    checkIfMobile()
+    window.addEventListener('resize', checkIfMobile)
+    return () => window.removeEventListener('resize', checkIfMobile)
+  }, [])
+
   useEffect(() => {
     handleResize()
     window.addEventListener('resize', handleResize)
@@ -158,7 +168,6 @@ const MySketch = ({ className }) => {
       .createCanvas(canvasSizeRef.current, canvasSizeRef.current)
       .parent(canvasParentRef)
     samplerRef.current = new Sampler(p5Inst, 5)
-    p5bezierRef.current = initBezier(canvas)
 
     setIsLoading(false)
 
@@ -174,7 +183,10 @@ const MySketch = ({ className }) => {
       p5Inst.resizeCanvas(canvasSizeRef.current[0], canvasSizeRef.current[1])
     }
     p5Inst.background(255)
-    drawGrid(p5Inst, DefaultWidth)
+    // 只在非移动设备上显示网格
+    if (!isMobile) {
+      drawGrid(p5Inst, DefaultWidth)
+    }
 
     const data = samplerRef.current?.sample(p5Inst)
     if (takePic && audioAllowed && lCnt <= lCntMax && cCnt <= cCntMax) {
@@ -210,7 +222,8 @@ const MySketch = ({ className }) => {
 
   return (
     <div ref={containerRef} className={`relative h-full w-full ${className}`}>
-      {!isLoading && (
+      {/* 只在非移动设备上显示左右切换按钮 */}
+      {!isLoading && !isMobile && (
         <LRControlButtons
           onIncrement={() => {
             setGlobalInt(prev =>
@@ -228,10 +241,10 @@ const MySketch = ({ className }) => {
       )}
 
       {!isLoading && (
-        <div className='fixed top-[80px] right-4 transform -translate-y-1/2'>
+        <div className='fixed top-[60px] md:top-[80px] right-4 transform -translate-y-1/2'>
           <div
             onClick={() => setColorOn(!colorOn)}
-            className='relative w-8 h-5 flex items-center rounded-full p-1 cursor-pointer overflow-hidden border-[1px] border-black'
+            className='relative w-7 h-4 md:w-8 md:h-5 flex items-center rounded-full p-1 cursor-pointer overflow-hidden border-[1px] border-black'
           >
             {/* 背景层 */}
             <div
@@ -246,15 +259,18 @@ const MySketch = ({ className }) => {
             />
             {/* 圆形滑块 */}
             <div
-              className={`relative bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${colorOn ? 'translate-x-[9px]' : 'translate-x-[-3px]'
-                }`}
+              className={`relative bg-white w-3 h-3 md:w-4 md:h-4 rounded-full shadow-md transform transition-transform ${
+                colorOn
+                  ? 'translate-x-[8px] md:translate-x-[9px]'
+                  : 'translate-x-[-3px]'
+              }`}
             ></div>
           </div>
         </div>
       )}
 
       {!isLoading && (
-        <p className='absolute text-2xl font-bold top-20 left-1/2 -translate-x-1/2 z-10 song-font'>
+        <p className='absolute text-xl md:text-2xl font-bold top-16 md:top-20 left-1/2 -translate-x-1/2 z-10 song-font'>
           {charData[globalInt].name}
         </p>
       )}
