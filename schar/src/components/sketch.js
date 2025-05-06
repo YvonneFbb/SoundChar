@@ -139,55 +139,82 @@ const MySketch = ({ className }) => {
     }, 100)
   }, [])
 
-  const drawGrid = useCallback((p5Inst, gridSize = 30, currentChar = null) => {
+  const drawGrid = useCallback((p5Inst, gridSize = 30, charWidth = 0, charHeight = 0) => {
     p5Inst.push()
     p5Inst.stroke(220)
     p5Inst.strokeWeight(0.5)
 
-    // 计算画布中心
-    const centerX = p5Inst.width / 2
-    const centerY = p5Inst.height / 2
+    // 计算字符在画布上的左上角坐标（像素单位）
+    // 这是字符居中时的精确左上角位置
+    const charTopLeftX = (p5Inst.width - charWidth * gridSize) / 2
+    const charTopLeftY = (p5Inst.height - charHeight * gridSize) / 2
 
-    // 计算网格偏移量，使网格与Character中心对齐
-    let offsetX = 0
-    let offsetY = 0
-
-    // 如果提供了当前字符，则计算偏移量使网格与字符中心对齐
-    if (currentChar) {
-      // 计算字符中心位置的小数部分
-      const charCenterX = ((p5Inst.width / gridSize) - currentChar.size[0]) / 2
-      const charCenterY = ((p5Inst.height / gridSize) - currentChar.size[1]) / 2
-
-      // 计算偏移量（小数部分 * 网格大小）
-      offsetX = (charCenterX - Math.floor(charCenterX)) * gridSize
-      offsetY = (charCenterY - Math.floor(charCenterY)) * gridSize
-    }
+    // 计算字符的右下角坐标
+    const charBottomRightX = charTopLeftX + charWidth * gridSize
+    const charBottomRightY = charTopLeftY + charHeight * gridSize
 
     // 使用单次绘制调用替代多次循环绘制
     p5Inst.beginShape(p5Inst.LINES)
 
-    // 从中心向两侧绘制水平线
-    for (let y = centerY; y >= 0; y -= gridSize) {
-      const adjustedY = y - offsetY
-      p5Inst.vertex(0, adjustedY)
-      p5Inst.vertex(p5Inst.width, adjustedY)
-    }
-    for (let y = centerY + gridSize; y <= p5Inst.height; y += gridSize) {
-      const adjustedY = y - offsetY
-      p5Inst.vertex(0, adjustedY)
-      p5Inst.vertex(p5Inst.width, adjustedY)
+    // 为了确保网格线与字符边界完全对齐，我们直接使用字符的左上角坐标作为起始点
+    // 不进行四舍五入，保持精确的位置
+    const firstGridX = charTopLeftX
+    const firstGridY = charTopLeftY
+
+    // 绘制与字符边界对齐的水平网格线
+    // 首先绘制经过字符上边界的水平线
+    p5Inst.vertex(0, firstGridY)
+    p5Inst.vertex(p5Inst.width, firstGridY)
+
+    // 绘制经过字符下边界的水平线
+    p5Inst.vertex(0, charBottomRightY)
+    p5Inst.vertex(p5Inst.width, charBottomRightY)
+
+    // 绘制字符内部的水平线
+    for (let i = 1; i < charHeight; i++) {
+      const y = firstGridY + i * gridSize
+      p5Inst.vertex(0, y)
+      p5Inst.vertex(p5Inst.width, y)
     }
 
-    // 从中心向两侧绘制垂直线
-    for (let x = centerX; x >= 0; x -= gridSize) {
-      const adjustedX = x - offsetX
-      p5Inst.vertex(adjustedX, 0)
-      p5Inst.vertex(adjustedX, p5Inst.height)
+    // 向上绘制额外的水平线
+    for (let y = firstGridY - gridSize; y >= 0; y -= gridSize) {
+      p5Inst.vertex(0, y)
+      p5Inst.vertex(p5Inst.width, y)
     }
-    for (let x = centerX + gridSize; x <= p5Inst.width; x += gridSize) {
-      const adjustedX = x - offsetX
-      p5Inst.vertex(adjustedX, 0)
-      p5Inst.vertex(adjustedX, p5Inst.height)
+
+    // 向下绘制额外的水平线
+    for (let y = charBottomRightY + gridSize; y <= p5Inst.height; y += gridSize) {
+      p5Inst.vertex(0, y)
+      p5Inst.vertex(p5Inst.width, y)
+    }
+
+    // 绘制与字符边界对齐的垂直网格线
+    // 首先绘制经过字符左边界的垂直线
+    p5Inst.vertex(firstGridX, 0)
+    p5Inst.vertex(firstGridX, p5Inst.height)
+
+    // 绘制经过字符右边界的垂直线
+    p5Inst.vertex(charBottomRightX, 0)
+    p5Inst.vertex(charBottomRightX, p5Inst.height)
+
+    // 绘制字符内部的垂直线
+    for (let i = 1; i < charWidth; i++) {
+      const x = firstGridX + i * gridSize
+      p5Inst.vertex(x, 0)
+      p5Inst.vertex(x, p5Inst.height)
+    }
+
+    // 向左绘制额外的垂直线
+    for (let x = firstGridX - gridSize; x >= 0; x -= gridSize) {
+      p5Inst.vertex(x, 0)
+      p5Inst.vertex(x, p5Inst.height)
+    }
+
+    // 向右绘制额外的垂直线
+    for (let x = charBottomRightX + gridSize; x <= p5Inst.width; x += gridSize) {
+      p5Inst.vertex(x, 0)
+      p5Inst.vertex(x, p5Inst.height)
     }
 
     p5Inst.endShape()
@@ -243,7 +270,8 @@ const MySketch = ({ className }) => {
     p5Inst.background(255)
     // 只在非移动设备上显示网格
     const currentChar = charData[globalIntRef.current]
-    drawGrid(p5Inst, DefaultWidth, currentChar)
+    // 直接传递字符的宽度和高度，而不是整个字符对象
+    drawGrid(p5Inst, DefaultWidth, currentChar.size[0], currentChar.size[1])
 
     const data = samplerRef.current?.sample(p5Inst)
 
