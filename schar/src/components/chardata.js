@@ -1,5 +1,6 @@
 'use client'
 
+// Better not modify it.
 const DefaultWidth = 30
 
 const CharType = {
@@ -7,6 +8,7 @@ const CharType = {
     BLOCK_W_MID: 1,
     ARC: 2,
     POLYLINE: 3,
+    CIRCLE: 4,
 }
 
 function calculateArc(points) {
@@ -63,15 +65,15 @@ function calculateArc(points) {
 
 // 添加记忆化函数工具
 function memoize(fn) {
-  const cache = new Map();
-  return function(...args) {
-    // 使用JSON.stringify作为缓存键
-    const key = JSON.stringify(args);
-    if (!cache.has(key)) {
-      cache.set(key, fn.apply(this, args));
-    }
-    return cache.get(key);
-  };
+    const cache = new Map();
+    return function (...args) {
+        // 使用JSON.stringify作为缓存键
+        const key = JSON.stringify(args);
+        if (!cache.has(key)) {
+            cache.set(key, fn.apply(this, args));
+        }
+        return cache.get(key);
+    };
 }
 
 // 优化弧形计算函数，使用记忆化包装
@@ -129,9 +131,9 @@ class CharCompo {
     getTransformedPoints(orig) {
         // 检查是否需要重新计算 (如果orig发生变化)
         const origChanged = !this.lastOrig ||
-                           this.lastOrig[0] !== orig[0] ||
-                           this.lastOrig[1] !== orig[1] ||
-                           this.lastOrig[2] !== orig[2];
+            this.lastOrig[0] !== orig[0] ||
+            this.lastOrig[1] !== orig[1] ||
+            this.lastOrig[2] !== orig[2];
 
         if (origChanged || !this.cachedTransformedPoints) {
             this.cachedTransformedPoints = this.points.map(p => [
@@ -224,12 +226,22 @@ class CharCompo {
                 p5Inst.endShape()
                 p5Inst.pop()
                 break
+            case CharType.CIRCLE:
+                p5Inst.push()
+                p5Inst.noFill()
+                p5Inst.strokeWeight(weight)
+                p5Inst.strokeCap(p5Inst.SQUARE)
+                const center = points[0]; // 第一个点作为圆心
+                const radius = p5Inst.dist(center[0], center[1], points[1][0], points[1][1]); // 第二个点到圆心的距离作为半径
+                p5Inst.circle(center[0], center[1], radius * 2); // p5.js的circle函数参数是直径，所以半径*2
+                p5Inst.pop()
+                break
         }
 
-        // for (let i = 0; i < points.length; i++) {
-        //     p5Inst.fill('red')
-        //     p5Inst.ellipse(points[i][0], points[i][1], 5, 5)
-        // }
+        for (let i = 0; i < points.length; i++) {
+            p5Inst.fill('red')
+            p5Inst.ellipse(points[i][0], points[i][1], 5, 5)
+        }
     }
 }
 
@@ -670,6 +682,43 @@ let jinData = new Character(
     [8, 13]
 )
 
+let huoData = new Character(
+    "火",
+    [
+        new CharCompo(
+            [
+                [0.5, 0.5],
+                [3, 3],
+                [6, 0.5],
+                [9, 3],
+                [11.5, 0.5]
+            ],
+            (p5Inst, loudness, centroid) => {
+                let w
+                if (loudness < 30) {
+                    w = DefaultWidth
+                } else {
+                    w = p5Inst.map(loudness, 30, 150, DefaultWidth, 80)
+                }
+                return w < 0 ? 0 : w
+            },
+            CharType.POLYLINE,
+        ),
+        new CharCompo(
+            [
+                [0.5, 0],
+                [6, 7.5],
+                [11.5, 0]
+            ],
+            (p5Inst, loudness, centroid) => {
+                let w = p5Inst.map(centroid, 0, 5000, DefaultWidth, 0)
+                return w
+            },
+            CharType.ARC,
+        )
+    ],
+    [12, 8]
+)
 
 let muData = new Character(
     "木",
@@ -827,15 +876,14 @@ let tuData = new Character(
         ),
         new CharCompo(
             [
-                [6, 0.5],
-                [6, 5.5],
-                [6.001, 0.5]
+                [6, 3],
+                [6, 0.5]
             ],
             (p5Inst, loudness, centroid) => {
                 let w = p5Inst.map(centroid, 0, 8000, DefaultWidth, 0)
                 return w
             },
-            CharType.ARC,
+            CharType.CIRCLE,
         )
     ],
     [12, 6]
@@ -878,15 +926,14 @@ let gongData = new Character(
         ),
         new CharCompo(
             [
+                [4, 9],
                 [4, 6.5],
-                [4, 11.5],
-                [4.002, 6.5]
             ],
             (p5Inst, loudness, centroid) => {
                 let w = p5Inst.map(centroid, 0, 8000, DefaultWidth, 80)
                 return w
             },
-            CharType.ARC,
+            CharType.CIRCLE,
         )
     ],
     [8, 12]
@@ -897,28 +944,26 @@ let riData = new Character(
     [
         new CharCompo(
             [
+                [6, 6],
                 [6, 0.5],
-                [6, 11.5],
-                [6.001, 0.5]
             ],
             (p5Inst, loudness, centroid) => {
                 let w = p5Inst.map(centroid, 0, 8000, DefaultWidth, 0)
                 return w
             },
-            CharType.ARC,
+            CharType.CIRCLE,
         ),
         new CharCompo(
             [
                 [6, 6],
-                [6, 6.001],
-                [6.001, 6]
+                [6, 6.1],
             ],
             (p5Inst, loudness, centroid) => {
                 let w = p5Inst.map(centroid, 0, 8000, DefaultWidth, 200)
                 return w
             },
-            CharType.ARC,
-        )
+            CharType.CIRCLE,
+        ),
     ],
     [12, 12]
 )
@@ -1074,9 +1119,8 @@ let yanData = new Character(
         ),
         new CharCompo(
             [
-                [3, 7.5],
-                [3, 11.5],
-                [3.001, 7.5]
+                [3, 9.5],
+                [3, 7.5]
             ],
             (p5Inst, loudness, centroid) => {
                 loudness = p5Inst.map(loudness, 0, 150, 1, 2)
@@ -1084,9 +1128,8 @@ let yanData = new Character(
                 let w = p5Inst.map(loudness * centroid, 1, 4, DefaultWidth, 80)
                 return w
             },
-            CharType.ARC,
+            CharType.CIRCLE,
         ),
-
     ],
     [6, 12]
 )
@@ -1179,16 +1222,15 @@ let shiData = new Character(
         ),
         new CharCompo(
             [
-                [2, 5.001],
-                [7, 5],
-                [2, 4.999]
+                [4.5, 5],
+                [2, 5],
             ],
             (p5Inst, loudness, centroid) => {
                 let w = p5Inst.map(loudness, 0, 150, DefaultWidth, 0)
                 return w
             },
-            CharType.ARC,
-        )
+            CharType.CIRCLE,
+        ),
     ],
     [8, 12]
 )
@@ -1199,23 +1241,22 @@ let mu2Data = new Character(
         new CharCompo(
             [
                 [5, 3],
-                [5, 3.001],
-                [5.001, 3]
+                [5, 3.1],
             ],
             (p5Inst, loudness, centroid) => {
-                let w = p5Inst.map(loudness, 0, 150, DefaultWidth, 60)
+                let w = p5Inst.map(loudness, 0, 150, DefaultWidth, 80)
                 return w
             },
-            CharType.ARC,
+            CharType.CIRCLE,
         ),
         new CharCompo(
             [
                 [0.5, 3.2],
-                [5, 0],
+                [5, 0.5],
                 [10, 3.2]
             ],
             (p5Inst, loudness, centroid) => {
-                let w = p5Inst.map(centroid, 0, 8000, DefaultWidth, 0)
+                let w = p5Inst.map(centroid, 0, 6000, DefaultWidth, 0)
                 return w
             },
             CharType.ARC,
@@ -1223,11 +1264,11 @@ let mu2Data = new Character(
         new CharCompo(
             [
                 [0.5, 2.8],
-                [5, 6],
+                [5, 5.5],
                 [10, 2.8]
             ],
             (p5Inst, loudness, centroid) => {
-                let w = p5Inst.map(centroid, 0, 8000, DefaultWidth, 0)
+                let w = p5Inst.map(centroid, 0, 6000, DefaultWidth, 0)
                 return w
             },
             CharType.ARC,
@@ -1322,6 +1363,271 @@ let yiData = new Character(
     [7, 12]
 )
 
+let kouData = new Character(
+    "口",
+    [
+        new CharCompo(
+            [
+                [11.8, 2.5],
+                [0.2, 2.5],
+            ],
+            (p5Inst, loudness, centroid) => {
+                // let w = p5Inst.map(loudness, 0, 150, DefaultWidth, 100)
+                let w
+                if (loudness < 30) {
+                    w = DefaultWidth
+                } else {
+                    w = p5Inst.map(loudness, 30, 150, DefaultWidth, 150)
+                }
+                return w
+            },
+            CharType.BLOCK_W,
+        ),
+        new CharCompo(
+            [
+                [1.2, 0.4],
+                [6, 8.5],
+                [10.8, 0.4]
+            ],
+            (p5Inst, loudness, centroid) => {
+                let w = p5Inst.map(centroid, 0, 8000, DefaultWidth, 0)
+                return w < 0 ? 0 : w
+            },
+            CharType.ARC,
+        )
+    ],
+    [12, 9]
+)
+
+let chong = new Character(
+    "虫",
+    [
+        new CharCompo(
+            [
+                [2.5, 2.5],
+                [2.5, 2.45]
+            ],
+            (p5Inst, loudness, centroid) => {
+                let w = p5Inst.map(centroid, 0, 6000, DefaultWidth, 100)
+                return w
+            },
+            CharType.CIRCLE,
+        ),
+        new CharCompo(
+            [
+                [2.5, 2.5],
+                [2.5, 0.5]
+            ],
+            (p5Inst, loudness, centroid) => {
+                let w
+                if (loudness < 60) {
+                    w = DefaultWidth
+                } else {
+                    w = p5Inst.map(loudness, 60, 180, DefaultWidth, 0)
+                }
+                return w
+            },
+            CharType.CIRCLE,
+        ),
+        new CharCompo(
+            [
+                [2.5, 4.5],
+                [2, 7.5],
+                [3, 10],
+                [2.5, 13]
+            ],
+            (p5Inst, loudness, centroid) => {
+                let w = p5Inst.map(centroid, 0, 8000, DefaultWidth, 50)
+                return w
+            },
+            CharType.POLYLINE,
+        )
+    ],
+    [5, 13]
+)
+
+let fuData = new Character(
+    "阝",
+    [
+        new CharCompo(
+            [
+                [5, 0],
+                [0, 0]
+            ],
+            (p5Inst, loudness, centroid) => {
+                let w
+                if (loudness < 60) {
+                    w = DefaultWidth
+                } else {
+                    w = p5Inst.map(loudness, 60, 180, DefaultWidth, 100)
+                }
+                return w
+            },
+            CharType.BLOCK_W,
+        ),
+        new CharCompo(
+            [
+                [1.5, 0.5],
+                [4.5, 3.5]
+            ],
+            (p5Inst, loudness, centroid) => {
+                let w = p5Inst.map(centroid, 0, 8000, DefaultWidth, 0)
+                return w
+            },
+            CharType.BLOCK_W_MID,
+        ),
+        new CharCompo(
+            [
+                [5, 4],
+                [0, 4]
+            ],
+            (p5Inst, loudness, centroid) => {
+                let w
+                if (loudness < 60) {
+                    w = DefaultWidth
+                } else {
+                    w = p5Inst.map(loudness, 60, 180, DefaultWidth, 100)
+                }
+                return w
+            },
+            CharType.BLOCK_W,
+        ),
+        new CharCompo(
+            [
+                [1.5, 4.5],
+                [4.5, 7.5]
+            ],
+            (p5Inst, loudness, centroid) => {
+                let w = p5Inst.map(centroid, 0, 8000, DefaultWidth, 0)
+                return w
+            },
+            CharType.BLOCK_W_MID,
+        ),
+        new CharCompo(
+            [
+                [5, 12],
+                [5, 0]
+            ],
+            (p5Inst, loudness, centroid) => {
+                loudness = p5Inst.map(loudness, 0, 150, 1, 1.2)
+                centroid = p5Inst.map(centroid, 0, 8000, 1, 1.2)
+                let w = p5Inst.map(loudness * centroid, 1, 2.4, DefaultWidth, 150)
+                return w
+            },
+            CharType.BLOCK_W,
+        )
+    ],
+    [5, 12]
+)
+
+let xinData = new Character(
+    "心",
+    [
+        new CharCompo(
+            [
+                [3.5, 0],
+                [0, 3.5]
+            ],
+            (p5Inst, loudness, centroid) => {
+                let w = p5Inst.map(centroid, 0, 8000, DefaultWidth, 150)
+                return w
+            },
+            CharType.BLOCK_W,
+        ),
+        new CharCompo(
+            [
+                [5.5, 2],
+                [3.5, 0],
+            ],
+            (p5Inst, loudness, centroid) => {
+                let w
+                if (loudness < 60) {
+                    w = DefaultWidth
+                } else {
+                    w = p5Inst.map(loudness, 60, 180, DefaultWidth, 100)
+                }
+                return w
+            },
+            CharType.BLOCK_W,
+        ),
+        new CharCompo(
+            [
+                [12, 3.5],
+                [8.5, 0],
+            ],
+            (p5Inst, loudness, centroid) => {
+                let w = p5Inst.map(centroid, 0, 8000, DefaultWidth, 150)
+                return w
+            },
+            CharType.BLOCK_W,
+        ),
+        new CharCompo(
+            [
+                [8.5, 0],
+                [6.5, 2],
+            ],
+            (p5Inst, loudness, centroid) => {
+                let w
+                if (loudness < 60) {
+                    w = DefaultWidth
+                } else {
+                    w = p5Inst.map(loudness, 60, 180, DefaultWidth, 100)
+                }
+                return w
+            },
+            CharType.BLOCK_W,
+        ),
+        new CharCompo(
+            [
+                [1.5, 5.5],
+                [6, 10],
+            ],
+            (p5Inst, loudness, centroid) => {
+                loudness = p5Inst.map(loudness, 0, 150, 1, 1.2)
+                centroid = p5Inst.map(centroid, 0, 6000, 1, 1.2)
+                let w = p5Inst.map(loudness * centroid, 1, 2.4, DefaultWidth, 200)
+                return w
+            },
+            CharType.BLOCK_W,
+        ),
+        new CharCompo(
+            [
+                [6, 10],
+                [10.5, 5.5],
+            ],
+            (p5Inst, loudness, centroid) => {
+                loudness = p5Inst.map(loudness, 0, 150, 1, 1.2)
+                centroid = p5Inst.map(centroid, 0, 6000, 1, 1.2)
+                let w = p5Inst.map(loudness * centroid, 1, 2.4, DefaultWidth, 200)
+                return w
+            },
+            CharType.BLOCK_W,
+        ),
+        new CharCompo(
+            [
+                [4.75, 4.75],
+                [3, 6.5]
+            ],
+            (p5Inst, loudness, centroid) => {
+                let w = p5Inst.map(centroid, 0, 8000, DefaultWidth, 0)
+                return w
+            },
+            CharType.BLOCK_W_MID,
+        ),
+        new CharCompo(
+            [
+                [7.25, 4.75],
+                [9, 6.5]
+            ],
+            (p5Inst, loudness, centroid) => {
+                let w = p5Inst.map(centroid, 0, 8000, DefaultWidth, 0)
+                return w
+            },
+            CharType.BLOCK_W_MID,
+        ),
+    ],
+    [12, 10]
+)
 
 let charData = [
     qiData,
@@ -1329,6 +1635,7 @@ let charData = [
     jinData,
     muData,
     shuiData,
+    huoData,
     tuData,
     gongData,
     riData,
@@ -1337,7 +1644,11 @@ let charData = [
     caoData,
     shiData,
     mu2Data,
-    yiData
+    yiData,
+    kouData,
+    chong,
+    fuData,
+    xinData,
 ]
 
 export { charData, DefaultWidth, CharType }

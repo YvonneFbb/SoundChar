@@ -27,7 +27,7 @@ const Sketch = dynamic(
 )
 
 class Sampler {
-  constructor (p5Inst, sampleInterval = 300) {
+  constructor(p5Inst, sampleInterval = 300) {
     this.mic = new window.p5.AudioIn()
     this.fft = new window.p5.FFT(0.8, 64)
     this.fft.setInput(this.mic)
@@ -40,7 +40,7 @@ class Sampler {
     this.gate = 50
   }
 
-  async enable () {
+  async enable() {
     try {
       await this.p5.userStartAudio()
       await navigator.mediaDevices.getUserMedia({ audio: true })
@@ -54,13 +54,13 @@ class Sampler {
     }
   }
 
-  async stop () {
+  async stop() {
     await this.p5.userStartAudio()
     await navigator.mediaDevices.getUserMedia({ audio: true })
     this.mic.stop()
   }
 
-  sample () {
+  sample() {
     const currentTime = this.p5.millis()
     if (currentTime - this.lastSampleTime >= this.sampleInterval) {
       this.lastSampleTime = currentTime
@@ -332,11 +332,10 @@ const MySketch = ({ className }) => {
 
       {!isLoading && (
         <div
-          className={`${
-            isMobile
+          className={`${isMobile
               ? 'absolute top-16 right-6'
               : 'fixed top-[80px] right-4 transform -translate-y-1/2'
-          } z-10`}
+            } z-10`}
         >
           <div
             onClick={() => setColorOn(!colorOn)}
@@ -344,24 +343,21 @@ const MySketch = ({ className }) => {
           >
             {/* 背景层 */}
             <div
-              className={`absolute inset-0 transition-opacity ${
-                colorOn
+              className={`absolute inset-0 transition-opacity ${colorOn
                   ? 'opacity-100 bg-gradient-to-tr from-[#0c75ff] to-[#f6c7ac]'
                   : 'opacity-0 bg-gradient-to-tr from-[#0c75ff] to-[#f6c7ac]'
-              }`}
+                }`}
             />
             <div
-              className={`absolute inset-0 transition-opacity bg-black ${
-                colorOn ? 'opacity-0' : 'opacity-100'
-              }`}
+              className={`absolute inset-0 transition-opacity bg-black ${colorOn ? 'opacity-0' : 'opacity-100'
+                }`}
             />
             {/* 圆形滑块 */}
             <div
-              className={`relative bg-white w-3 h-3 md:w-4 md:h-4 rounded-full shadow-md transform transition-transform ${
-                colorOn
+              className={`relative bg-white w-3 h-3 md:w-4 md:h-4 rounded-full shadow-md transform transition-transform ${colorOn
                   ? 'translate-x-[8px] md:translate-x-[9px]'
                   : 'translate-x-[-3px]'
-              }`}
+                }`}
             ></div>
           </div>
         </div>
@@ -375,7 +371,8 @@ const MySketch = ({ className }) => {
 
       {!isLoading && (
         <button
-          className='absolute text-xl font-bold bottom-1/4 left-1/2 -translate-x-1/2 translate-y-8 flex gap-8 z-10'
+          className='absolute text-xl font-bold left-1/2 -translate-x-1/2 translate-y-8 flex gap-8 z-10'
+          style={{ bottom: '20%' }} 
           onClick={async () => {
             if (!audioAllowed) {
               // 如果音频未开启，则启动音频
@@ -390,6 +387,7 @@ const MySketch = ({ className }) => {
         >
           {audioAllowed ? 'PAUSE' : 'START'}
         </button>
+
       )}
 
       <Sketch setup={setup} draw={draw} />
