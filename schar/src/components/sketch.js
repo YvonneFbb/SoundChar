@@ -13,6 +13,9 @@ let lCntMax = 18
 let cCnt = 0
 let cCntMax = 10
 
+// 调试模式开关 - 设为false可在发布时隐藏调试界面
+const EnableDebug = false
+
 const Sketch = dynamic(
   () =>
     import('react-p5').then(mod => {
@@ -25,6 +28,30 @@ const Sketch = dynamic(
     }),
   { ssr: false }
 )
+
+// 播放图标SVG组件
+const PlayIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white" stroke="currentColor" strokeWidth="2">
+    <polygon points="5,3 19,12 5,21" />
+  </svg>
+);
+
+// 暂停图标SVG组件
+const PauseIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white" stroke="currentColor" strokeWidth="2">
+    <line x1="8" y1="4" x2="8" y2="20" />
+    <line x1="16" y1="4" x2="16" y2="20" />
+  </svg>
+);
+
+// 下载图标SVG组件
+const DownloadIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 15L12 3" />
+    <path d="M7 10L12 15 17 10" />
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+  </svg>
+);
 
 class Sampler {
   constructor(p5Inst, sampleInterval = 300) {
@@ -70,6 +97,7 @@ class Sampler {
       this.centroid = this.fft.getCentroid()
     }
     return { loudness: this.loudness, centroid: this.centroid }
+
   }
 }
 
@@ -123,6 +151,12 @@ const MySketch = ({ className }) => {
   const [canvasSize, setCanvasSize] = useState([800, 800])
   const [colorOn, setColorOn] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const [canvasRef, setCanvasRef] = useState(null)
+  
+  // 添加滑杆控制状态
+  const [manualMode, setManualMode] = useState(false)
+  const [manualLoudness, setManualLoudness] = useState(50)
+  const [manualCentroid, setManualCentroid] = useState(3000)
 
   const samplerRef = useRef()
   const globalIntRef = useRef(globalInt)
@@ -253,6 +287,7 @@ const MySketch = ({ className }) => {
       .createCanvas(canvasSizeRef.current, canvasSizeRef.current)
       .parent(canvasParentRef)
     samplerRef.current = new Sampler(p5Inst, 5)
+    setCanvasRef(p5Inst)
 
     setIsLoading(false)
 
@@ -271,13 +306,19 @@ const MySketch = ({ className }) => {
     // 只在非移动设备上显示网格
     const currentChar = charData[globalIntRef.current]
     // 直接传递字符的宽度和高度，而不是整个字符对象
-    drawGrid(p5Inst, DefaultWidth, currentChar.size[0], currentChar.size[1])
+    // drawGrid(p5Inst, DefaultWidth, currentChar.size[0], currentChar.size[1])
 
     const data = samplerRef.current?.sample(p5Inst)
+    
+    // 如果开启手动模式，使用滑杆设置的值
+    const finalData = {
+      loudness: manualMode ? manualLoudness : (data?.loudness || 0),
+      centroid: manualMode ? manualCentroid : (data?.centroid || 0)
+    }
 
     if (takePic && audioAllowed && lCnt <= lCntMax && cCnt <= cCntMax) {
-      data.centroid = cCnt * 1000
-      data.loudness = lCnt * 10
+      finalData.centroid = cCnt * 1000
+      finalData.loudness = lCnt * 10
       cnt += 1
     }
 
@@ -288,15 +329,15 @@ const MySketch = ({ className }) => {
         canvasSizeRef.current[1] / gridSize,
         gridSize
       ],
-      data.loudness,
-      data.centroid,
+      finalData.loudness,
+      finalData.centroid,
       colorOn
     )
 
     if (takePic && cnt >= 15) {
       if (audioAllowed && lCnt <= lCntMax && cCnt <= cCntMax) {
         p5Inst.saveCanvas(
-          'myCanvas' + '-' + data.centroid + '-' + data.loudness,
+          'myCanvas' + '-' + finalData.centroid + '-' + finalData.loudness,
           'png'
         )
       }
@@ -307,6 +348,15 @@ const MySketch = ({ className }) => {
         cCnt += 1
         lCnt = 0
       }
+    }
+  }
+
+  // 保存当前画布的函数
+  const saveCurrentCanvas = () => {
+    if (canvasRef) {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const filename = `SoundChar-${charData[globalInt].name}-${timestamp}`;
+      canvasRef.saveCanvas(filename, 'png');
     }
   }
 
@@ -333,8 +383,8 @@ const MySketch = ({ className }) => {
       {!isLoading && (
         <div
           className={`${isMobile
-              ? 'absolute top-16 right-6'
-              : 'fixed top-[80px] right-4 transform -translate-y-1/2'
+            ? 'absolute top-16 right-6'
+            : 'fixed top-[80px] right-4 transform -translate-y-1/2'
             } z-10`}
         >
           <div
@@ -344,8 +394,8 @@ const MySketch = ({ className }) => {
             {/* 背景层 */}
             <div
               className={`absolute inset-0 transition-opacity ${colorOn
-                  ? 'opacity-100 bg-gradient-to-tr from-[#0c75ff] to-[#f6c7ac]'
-                  : 'opacity-0 bg-gradient-to-tr from-[#0c75ff] to-[#f6c7ac]'
+                ? 'opacity-100 bg-gradient-to-tr from-[#0c75ff] to-[#f6c7ac]'
+                : 'opacity-0 bg-gradient-to-tr from-[#0c75ff] to-[#f6c7ac]'
                 }`}
             />
             <div
@@ -355,8 +405,8 @@ const MySketch = ({ className }) => {
             {/* 圆形滑块 */}
             <div
               className={`relative bg-white w-3 h-3 md:w-4 md:h-4 rounded-full shadow-md transform transition-transform ${colorOn
-                  ? 'translate-x-[8px] md:translate-x-[9px]'
-                  : 'translate-x-[-3px]'
+                ? 'translate-x-[8px] md:translate-x-[9px]'
+                : 'translate-x-[-3px]'
                 }`}
             ></div>
           </div>
@@ -369,25 +419,81 @@ const MySketch = ({ className }) => {
         </p>
       )}
 
-      {!isLoading && (
-        <button
-          className='absolute text-xl font-bold left-1/2 -translate-x-1/2 translate-y-8 flex gap-8 z-10'
-          style={{ bottom: '20%' }} 
-          onClick={async () => {
-            if (!audioAllowed) {
-              // 如果音频未开启，则启动音频
-              await samplerRef.current?.enable()
-              setAudioAllowed(true)
-            } else {
-              // 如果音频已开启，则暂停/停止麦克风输入
-              samplerRef.current?.mic.stop()
-              setAudioAllowed(false)
-            }
-          }}
-        >
-          {audioAllowed ? 'PAUSE' : 'START'}
-        </button>
+      {/* 添加调试滑杆控件 - 只在EnableDebug为true时显示 */}
+      {!isLoading && EnableDebug && (
+        <div className="absolute top-6 left-1/2 transform -translate-x-1/2 bg-white bg-opacity-80 p-3 rounded-lg shadow-md z-20 flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <input 
+              type="checkbox" 
+              id="manualMode" 
+              checked={manualMode} 
+              onChange={(e) => setManualMode(e.target.checked)}
+            />
+            <label htmlFor="manualMode" className="text-sm font-medium">调试模式</label>
+          </div>
+          
+          {manualMode && (
+            <>
+              <div className="flex items-center gap-2">
+                <label htmlFor="loudness" className="text-sm w-16">响度:</label>
+                <input
+                  type="range"
+                  id="loudness"
+                  min="0"
+                  max="180"
+                  value={manualLoudness}
+                  onChange={(e) => setManualLoudness(Number(e.target.value))}
+                  className="w-40"
+                />
+                <span className="text-xs w-8">{manualLoudness}</span>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <label htmlFor="centroid" className="text-sm w-16">中心频率:</label>
+                <input
+                  type="range"
+                  id="centroid"
+                  min="0"
+                  max="9000"
+                  step="100"
+                  value={manualCentroid}
+                  onChange={(e) => setManualCentroid(Number(e.target.value))}
+                  className="w-40"
+                />
+                <span className="text-xs w-8">{manualCentroid}</span>
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
+      {!isLoading && (
+        <div className='absolute text-xl font-bold left-1/2 -translate-x-1/2 translate-y-8 flex gap-8 z-10'
+          style={{ bottom: '20%' }}>
+          <button
+            className='p-3 text-[#f6c7ac] rounded-full flex items-center justify-center w-12 h-12'
+            onClick={async () => {
+              if (!audioAllowed) {
+                // 如果音频未开启，则启动音频
+                await samplerRef.current?.enable()
+                setAudioAllowed(true)
+              } else {
+                // 如果音频已开启，则暂停/停止麦克风输入
+                samplerRef.current?.mic.stop()
+                setAudioAllowed(false)
+              }
+            }}
+          >
+            {audioAllowed ? <PauseIcon /> : <PlayIcon />}
+          </button>
+          
+          <button
+            className='p-3 text-[#f6c7ac] rounded-full flex items-center justify-center w-12 h-12'
+            onClick={saveCurrentCanvas}
+          >
+            <DownloadIcon />
+          </button>
+        </div>
       )}
 
       <Sketch setup={setup} draw={draw} />

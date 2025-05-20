@@ -266,12 +266,91 @@ const MobileGridButton = memo(({ onClick }) => {
   )
 })
 
+// 移动导航面板组件
+const MobileNavigationPanel = memo(({ show, onClose, onNavItemClick }) => {
+  // 加载所有导航图片
+  const navItems = [
+    { id: 0, name: '气', image: '/phonenav/导视_气  副本.png' },
+    { id: 1, name: '月', image: '/phonenav/导视_月 副本.png' },
+    { id: 2, name: '金', image: '/phonenav/导视_金 副本.png' },
+    { id: 3, name: '木', image: '/phonenav/导视_木 副本.png' },
+    { id: 4, name: '水', image: '/phonenav/导视_水 副本.png' },
+    { id: 5, name: '火', image: '/phonenav/导视_火 副本.png' },
+    { id: 6, name: '土', image: '/phonenav/导视_土 副本.png' },
+    { id: 7, name: '工', image: '/phonenav/导视_工 副本.png' },
+    { id: 8, name: '日', image: '/phonenav/导视_日 副本.png' },
+    { id: 9, name: '爿', image: '/phonenav/导视_爿 副本.png' },
+    { id: 10, name: '言', image: '/phonenav/导视_言 副本.png' },
+    { id: 11, name: '艹', image: '/phonenav/导视_艹 副本.png' },
+    { id: 12, name: '石', image: '/phonenav/导视_石 副本.png' },
+    { id: 13, name: '目', image: '/phonenav/导视_目 副本.png' },
+    { id: 14, name: '衣', image: '/phonenav/导视_衣 副本.png' },
+    { id: 15, name: '口', image: '/phonenav/导视_口 副本.png' },
+    { id: 16, name: '虫', image: '/phonenav/导视_虫 副本.png' },
+    { id: 17, name: '阝', image: '/phonenav/导视_阝 副本.png' },
+    { id: 18, name: '心', image: '/phonenav/导视_心 副本.png' },
+    { id: 19, name: '勹', image: '/phonenav/导视_勹 副本.png' },
+    { id: 20, name: '足', image: '/phonenav/导视_足 副本.png' },
+    { id: 21, name: '辶', image: '/phonenav/导视_辶 副本.png' },
+    { id: 22, name: '鸟', image: '/phonenav/导视_鸟 副本.png' },
+    { id: 23, name: '白', image: '/phonenav/导视_白 副本.png' },
+    { id: 24, name: '央', image: '/phonenav/导视_央 副本.png' },
+    { id: 25, name: '宀', image: '/phonenav/导视_宀 副本.png' },
+    { id: 26, name: '方', image: '/phonenav/导视_方 副本.png' },
+    { id: 27, name: '中', image: '/phonenav/导视_中 副本.png' },
+    { id: 28, name: '人', image: '/phonenav/导视_人 副本.png' },
+    { id: 29, name: '从', image: '/phonenav/导视_从 副本.png' }
+  ];
+
+  return (
+    <div
+      className={`absolute right-0 top-0 h-full w-3/4 sm:w-1/2
+        bg-gray-200/30 backdrop-blur transition-transform
+        duration-300 ease-in-out z-30 ${
+          show ? 'translate-x-0' : 'translate-x-full'
+        }`}
+    >
+      <div className='sticky top-0 left-0 right-0 h-16 flex items-center px-4'>
+        <button
+          onClick={onClose}
+          className='text-4xl leading-none text-[#0c75ff] transition-colors'
+        >
+          &times;
+        </button>
+      </div>
+      <div className='overflow-y-auto no-scrollbar h-[calc(100%-4rem)] p-4'>
+        <div className='grid grid-cols-2 gap-4'>
+          {navItems.map((item) => (
+            <div 
+              key={item.id} 
+              className='flex flex-col items-center cursor-pointer'
+              onClick={() => onNavItemClick(item.id)}
+            >
+              <div className='w-full aspect-square mb-2 relative'>
+                <img 
+                  src={item.image} 
+                  alt={item.name} 
+                  className='w-full h-full object-contain' 
+                />
+              </div>
+              <span className='text-sm'>{item.name}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+});
+
 export default function Home() {
   const [showReference, setShowReference] = useState(false)
   const [showIntro, setShowIntro] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
   const [contentCloned, setContentCloned] = useState(false)
   const [gridView, setGridView] = useState(false)
+  const [showNavigation, setShowNavigation] = useState(false)
+  // 添加当前显示的字符索引状态
+  const [currentCharIndex, setCurrentCharIndex] = useState(0)
 
   // 使用 useCallback 稳定化函数引用
   const toggleReference = useCallback(() => {
@@ -282,10 +361,15 @@ export default function Home() {
     setShowIntro(prev => !prev)
   }, [])
 
-  const toggleGridView = useCallback(() => {
-    setGridView(prev => !prev)
-    console.log("Grid view toggled")
-    // 这里可以添加更多处理逻辑
+  const toggleNavigation = useCallback(() => {
+    setShowNavigation(prev => !prev)
+  }, [])
+
+  // 处理导航项点击，更新显示的字符
+  const handleNavItemClick = useCallback((id) => {
+    setCurrentCharIndex(id)
+    // 关闭导航面板
+    setShowNavigation(false)
   }, [])
 
   // 移动设备检测和内容克隆优化
@@ -298,6 +382,10 @@ export default function Home() {
       // 只在移动设备状态变化时更新介绍面板显示状态
       if (isMobileView !== isMobile) {
         setShowIntro(!isMobileView)
+        // 确保在切换到非移动视图时关闭导航面板
+        if (!isMobileView) {
+          setShowNavigation(false)
+        }
       }
     }
 
@@ -411,7 +499,7 @@ export default function Home() {
 
         {/* 画布容器 */}
         <div className='w-full md:w-2/3 h-full min-h-[60vh] md:min-h-0 overflow-hidden'>
-          <MySketch />
+          <MySketch currentCharIndex={currentCharIndex} />
         </div>
 
         {/* 引用面板 */}
@@ -422,9 +510,18 @@ export default function Home() {
 
         {/* 移动端介绍面板 */}
         {mobileIntroPanel}
+
+        {/* 移动端导航面板 */}
+        {isMobile && (
+          <MobileNavigationPanel 
+            show={showNavigation} 
+            onClose={toggleNavigation}
+            onNavItemClick={handleNavItemClick}
+          />
+        )}
       </div>
     )
-  }, [isMobile, showReference, toggleReference, mobileIntroPanel])
+  }, [isMobile, showReference, toggleReference, mobileIntroPanel, showNavigation, toggleNavigation, handleNavItemClick, currentCharIndex])
 
   return (
     <div className='flex flex-col h-screen overflow-hidden'>
@@ -434,8 +531,8 @@ export default function Home() {
       {/* 移动端左侧菜单按钮 */}
       {isMobile && <MobileMenuButton onClick={toggleIntro} />}
 
-      {/* 移动端右侧四方格按钮 */}
-      {isMobile && <MobileGridButton onClick={toggleGridView} />}
+      {/* 移动端右侧四方格按钮 - 修改点击事件处理 */}
+      {isMobile && <MobileGridButton onClick={toggleNavigation} />}
 
       {/* 主内容区域 */}
       {mainContent}
