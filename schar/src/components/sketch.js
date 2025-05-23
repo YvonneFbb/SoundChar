@@ -144,8 +144,8 @@ const LRControlButtons = ({ onIncrement, onDecrement }) => (
   </div>
 )
 
-const MySketch = ({ className }) => {
-  const [globalInt, setGlobalInt] = useState(0)
+const MySketch = ({ className, currentCharIndex = 0 }) => {
+  const [globalInt, setGlobalInt] = useState(currentCharIndex)
   const [audioAllowed, setAudioAllowed] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [canvasSize, setCanvasSize] = useState([800, 800])
@@ -281,6 +281,11 @@ const MySketch = ({ className }) => {
       if (resizeTimeoutId.current) clearTimeout(resizeTimeoutId.current)
     }
   }, [])
+
+  // 监听currentCharIndex的变化，更新globalInt
+  useEffect(() => {
+    setGlobalInt(currentCharIndex)
+  }, [currentCharIndex])
 
   const setup = (p5Inst, canvasParentRef) => {
     const canvas = p5Inst

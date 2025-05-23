@@ -268,7 +268,7 @@ const MobileGridButton = memo(({ onClick }) => {
 
 // 移动导航面板组件
 const MobileNavigationPanel = memo(({ show, onClose, onNavItemClick }) => {
-  // 加载所有导航图片
+  // 加载所有导航图片 - 与charData数组中的字符顺序匹配
   const navItems = [
     { id: 0, name: '气', image: '/phonenav/导视_气  副本.png' },
     { id: 1, name: '月', image: '/phonenav/导视_月 副本.png' },
@@ -290,16 +290,14 @@ const MobileNavigationPanel = memo(({ show, onClose, onNavItemClick }) => {
     { id: 17, name: '阝', image: '/phonenav/导视_阝 副本.png' },
     { id: 18, name: '心', image: '/phonenav/导视_心 副本.png' },
     { id: 19, name: '勹', image: '/phonenav/导视_勹 副本.png' },
-    { id: 20, name: '足', image: '/phonenav/导视_足 副本.png' },
-    { id: 21, name: '辶', image: '/phonenav/导视_辶 副本.png' },
-    { id: 22, name: '鸟', image: '/phonenav/导视_鸟 副本.png' },
-    { id: 23, name: '白', image: '/phonenav/导视_白 副本.png' },
-    { id: 24, name: '央', image: '/phonenav/导视_央 副本.png' },
+    { id: 20, name: '人', image: '/phonenav/导视_人 副本.png' },
+    { id: 21, name: '雨', image: '/phonenav/导视_雨 副本.png' },
+    { id: 22, name: '斤', image: '/phonenav/导视_斤 副本.png' },
+    { id: 23, name: '足', image: '/phonenav/导视_足 副本.png' },
+    { id: 24, name: '辶', image: '/phonenav/导视_辶 副本.png' },
     { id: 25, name: '宀', image: '/phonenav/导视_宀 副本.png' },
-    { id: 26, name: '方', image: '/phonenav/导视_方 副本.png' },
-    { id: 27, name: '中', image: '/phonenav/导视_中 副本.png' },
-    { id: 28, name: '人', image: '/phonenav/导视_人 副本.png' },
-    { id: 29, name: '从', image: '/phonenav/导视_从 副本.png' }
+    { id: 26, name: '央', image: '/phonenav/导视_央 副本.png' },
+    { id: 27, name: '未', image: '/phonenav/导视_未 副本.png' }
   ];
 
   return (
