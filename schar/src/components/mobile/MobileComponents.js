@@ -1,5 +1,6 @@
 import { memo } from 'react'
 import { STYLES, NAV_ITEMS, ANIMATION_CONFIG } from '@/constants'
+import { GridButton } from '@/components/icons'
 
 // 移动端左侧菜单按钮
 export const MobileMenuButton = memo(({ onClick }) => {
@@ -18,16 +19,11 @@ export const MobileMenuButton = memo(({ onClick }) => {
 // 移动端右侧四方格按钮
 export const MobileGridButton = memo(({ onClick }) => {
   return (
-    <button
+    <GridButton
       onClick={onClick}
-      className={`${STYLES.mobileButton} right-6 w-5 h-5 grid grid-cols-2 grid-rows-2 gap-0.5`}
-      aria-label="Grid view"
-    >
-      <div className='w-2 h-2 bg-black'></div>
-      <div className='w-2 h-2 bg-black'></div>
-      <div className='w-2 h-2 bg-black'></div>
-      <div className='w-2 h-2 bg-black'></div>
-    </button>
+      className={`${STYLES.mobileButton} right-6`}
+      ariaLabel="Navigation grid"
+    />
   )
 })
 

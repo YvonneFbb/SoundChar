@@ -22,6 +22,20 @@ export const DownloadIcon = () => (
   </svg>
 )
 
+// 通用4方格按钮组件
+export const GridButton = ({ onClick, className = "", ariaLabel = "Grid view" }) => (
+  <button
+    onClick={onClick}
+    className={`w-5 h-5 grid grid-cols-2 grid-rows-2 gap-0.5 ${className}`}
+    aria-label={ariaLabel}
+  >
+    <div className='w-2 h-2 bg-black'></div>
+    <div className='w-2 h-2 bg-black'></div>
+    <div className='w-2 h-2 bg-black'></div>
+    <div className='w-2 h-2 bg-black'></div>
+  </button>
+)
+
 // 左箭头图标
 export const LeftArrowIcon = ({ className = "w-8 h-8" }) => (
   <svg className={className} viewBox="0 0 100 100">

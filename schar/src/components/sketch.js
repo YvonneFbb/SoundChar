@@ -303,14 +303,17 @@ const MySketch = ({ className, currentCharIndex = 0 }) => {
 
       {/* 控制按钮 */}
       {!isLoading && (
-        <div className={`${STYLES.centerText} translate-y-8 flex gap-8 z-10`} style={{ bottom: '20%' }}>
+        <div className={`${STYLES.centerText} translate-y-8 ${isMobile ? 'flex gap-8' : 'flex justify-center'} z-10`} style={{ bottom: '20%' }}>
           <button className={STYLES.button} onClick={toggleAudio}>
             {audioAllowed ? <PauseIcon /> : <PlayIcon />}
           </button>
           
-          <button className={STYLES.button} onClick={saveCurrentCanvas}>
-            <DownloadIcon />
-          </button>
+          {/* 下载按钮仅在移动端显示 */}
+          {isMobile && (
+            <button className={STYLES.button} onClick={saveCurrentCanvas}>
+              <DownloadIcon />
+            </button>
+          )}
         </div>
       )}
 

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, memo } from 'react'
 import Header from '@/components/header'
 import dynamic from 'next/dynamic'
-import { ReferencePanel, IntroContent } from '@/components/panels'
+import { ReferencePanel, IntroContent, DesktopNavigationPanel } from '@/components/panels'
 import { MobileMenuButton, MobileGridButton, MobileNavigationPanel } from '@/components/mobile/MobileComponents'
 import { useMobile } from '@/hooks/useMobile'
 import { STYLES, ANIMATION_CONFIG } from '@/constants'
@@ -17,6 +17,7 @@ export default function Home() {
   const [showIntro, setShowIntro] = useState(true)
   const [contentCloned, setContentCloned] = useState(false)
   const [showNavigation, setShowNavigation] = useState(false)
+  const [showDesktopNavigation, setShowDesktopNavigation] = useState(false)
   const [currentCharIndex, setCurrentCharIndex] = useState(0)
   
   const isMobile = useMobile()
@@ -34,9 +35,14 @@ export default function Home() {
     setShowNavigation(prev => !prev)
   }, [])
 
+  const toggleDesktopNavigation = useCallback(() => {
+    setShowDesktopNavigation(prev => !prev)
+  }, [])
+
   const handleNavItemClick = useCallback((id) => {
     setCurrentCharIndex(id)
     setShowNavigation(false)
+    setShowDesktopNavigation(false)
   }, [])
 
   // 移动设备检测和内容克隆
@@ -141,6 +147,13 @@ export default function Home() {
         {/* 引用面板 */}
         <ReferencePanel showReference={showReference} onClose={toggleReference} />
 
+        {/* PC端字符导航面板 */}
+        <DesktopNavigationPanel 
+          showNavigation={showDesktopNavigation} 
+          onClose={toggleDesktopNavigation}
+          onNavItemClick={handleNavItemClick}
+        />
+
         {/* 移动端面板 */}
         {mobileIntroPanel}
         
@@ -153,12 +166,17 @@ export default function Home() {
         )}
       </div>
     )
-  }, [isMobile, showReference, toggleReference, mobileIntroPanel, showNavigation, toggleNavigation, handleNavItemClick, currentCharIndex])
+  }, [isMobile, showReference, toggleReference, showDesktopNavigation, toggleDesktopNavigation, mobileIntroPanel, showNavigation, toggleNavigation, handleNavItemClick, currentCharIndex])
 
   return (
     <div className='flex flex-col h-screen overflow-hidden'>
       {/* Header - 仅在桌面端显示 */}
-      {!isMobile && <Header onReferenceClick={toggleReference} />}
+      {!isMobile && (
+        <Header 
+          onReferenceClick={toggleReference} 
+          onNavigationClick={toggleDesktopNavigation}
+        />
+      )}
 
       {/* 移动端按钮 */}
       {isMobile && (

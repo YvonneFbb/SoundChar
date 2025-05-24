@@ -1,5 +1,5 @@
 import { memo } from 'react'
-import { STYLES, ANIMATION_CONFIG } from '@/constants'
+import { STYLES, ANIMATION_CONFIG, NAV_ITEMS } from '@/constants'
 
 // 引用面板组件
 export const ReferencePanel = memo(({ showReference, onClose }) => {
@@ -63,6 +63,48 @@ export const ReferencePanel = memo(({ showReference, onClose }) => {
           </ul>
           <p className='mt-4'></p>
         </article>
+      </div>
+    </div>
+  )
+})
+
+// PC端字符导航面板组件
+export const DesktopNavigationPanel = memo(({ showNavigation, onClose, onNavItemClick }) => {
+  return (
+    <div
+      className={`absolute right-0 bottom-0 h-[calc(100%-3rem)] w-[calc(33.3%-8px)]
+        ${STYLES.panel} transition-transform ${ANIMATION_CONFIG.panelTransition} z-20 hidden md:block ${
+          showNavigation ? 'translate-x-0' : 'translate-x-full'
+        }`}
+    >
+      <div className='sticky top-0 left-0 right-0 h-16 flex items-center justify-between px-6'>
+        <h2 className='text-2xl font-black text-[#0c75ff]'>Characters</h2>
+        <button
+          onClick={onClose}
+          className='text-5xl leading-none text-[#0c75ff] transition-colors'
+        >
+          &times;
+        </button>
+      </div>
+      <div className='overflow-y-auto no-scrollbar h-[calc(100%-4rem)] p-6'>
+        <div className='grid grid-cols-3 gap-4'>
+          {NAV_ITEMS.map((item) => (
+            <div 
+              key={item.id} 
+              className='flex flex-col items-center cursor-pointer hover:bg-white/20 rounded-lg p-3 transition-colors'
+              onClick={() => onNavItemClick(item.id)}
+            >
+              <div className='w-full aspect-square mb-2 relative'>
+                <img 
+                  src={item.image} 
+                  alt={item.name} 
+                  className='w-full h-full object-contain' 
+                />
+              </div>
+              <span className='text-sm font-medium'>{item.name}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )
