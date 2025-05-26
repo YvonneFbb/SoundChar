@@ -10,8 +10,8 @@ export const MobileMenuButton = memo(({ onClick }) => {
       className={`${STYLES.mobileButton} left-6 flex flex-col items-center justify-center`}
       aria-label="Toggle menu"
     >
-      <div className='w-5 h-0.5 bg-black mb-1.5'></div>
-      <div className='w-5 h-0.5 bg-black'></div>
+      <div className='w-5 h-0.5 bg-[#0c75ff] mb-1.5'></div>
+      <div className='w-5 h-0.5 bg-[#0c75ff]'></div>
     </button>
   )
 })

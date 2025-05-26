@@ -25,12 +25,12 @@ export default function Header ({ onReferenceClick, onNavigationClick, language,
         {/* 右侧按钮 */}
         <div className='flex items-center gap-4 px-4'>
           <button className='flex px-2 justify-end' onClick={onReferenceClick}>
-            <span className='text-black-600 transition-colors underline'>
+            <span className='text-[#0c75ff] transition-colors underline'>
             Reference
           </span>
         </button>
           <button className='flex px-2 justify-end' onClick={onLanguageToggle}>
-            <span className='text-black-600 transition-colors underline'>
+            <span className='text-[#0c75ff] transition-colors underline'>
               {language === 'en' ? 'CN' : 'EN'}
             </span>
           </button>

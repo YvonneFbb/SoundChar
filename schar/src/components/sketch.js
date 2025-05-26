@@ -93,7 +93,7 @@ const MySketch = ({ className, currentCharIndex = 0 }) => {
   const [canvasSize, setCanvasSize] = useState(CANVAS_CONFIG.defaultSize)
   const [colorOn, setColorOn] = useState(false)
   const [canvasRef, setCanvasRef] = useState(null)
-  
+
   // 调试控制状态
   const [manualMode, setManualMode] = useState(false)
   const [manualLoudness, setManualLoudness] = useState(50)
@@ -155,10 +155,10 @@ const MySketch = ({ className, currentCharIndex = 0 }) => {
     ) {
       p5Inst.resizeCanvas(canvasSizeRef.current[0], canvasSizeRef.current[1])
     }
-    
+
     p5Inst.background(255)
     const data = samplerRef.current?.sample(p5Inst)
-    
+
     const finalData = {
       loudness: manualMode ? manualLoudness : (data?.loudness || 0),
       centroid: manualMode ? manualCentroid : (data?.centroid || 0)
@@ -249,14 +249,12 @@ const MySketch = ({ className, currentCharIndex = 0 }) => {
       {/* 字符名称显示 */}
       {!isLoading && (
         <div className={`${STYLES.centerText} top-16 md:top-20 z-10 ${STYLES.songFont} text-center`}>
+          <p className="text-sm md:text-base font-bold">
+            {charData[globalInt].pinyin}
+          </p>
           <p className="text-xl md:text-2xl font-bold mb-1">
             {charData[globalInt].name}
           </p>
-          {charData[globalInt].pinyin && (
-            <p className="text-sm md:text-base text-gray-600 font-bold">
-              {charData[globalInt].pinyin}
-            </p>
-          )}
         </div>
       )}
 
@@ -264,15 +262,15 @@ const MySketch = ({ className, currentCharIndex = 0 }) => {
       {!isLoading && ENABLE_DEBUG && (
         <div className="absolute top-6 left-1/2 transform -translate-x-1/2 bg-white bg-opacity-80 p-3 rounded-lg shadow-md z-20 flex flex-col gap-2">
           <div className="flex items-center gap-2">
-            <input 
-              type="checkbox" 
-              id="manualMode" 
-              checked={manualMode} 
+            <input
+              type="checkbox"
+              id="manualMode"
+              checked={manualMode}
               onChange={(e) => setManualMode(e.target.checked)}
             />
             <label htmlFor="manualMode" className="text-sm font-medium">调试模式</label>
           </div>
-          
+
           {manualMode && (
             <>
               <div className="flex items-center gap-2">
@@ -288,7 +286,7 @@ const MySketch = ({ className, currentCharIndex = 0 }) => {
                 />
                 <span className="text-xs w-8">{manualLoudness}</span>
               </div>
-              
+
               <div className="flex items-center gap-2">
                 <label htmlFor="centroid" className="text-sm w-16">中心频率:</label>
                 <input
@@ -314,12 +312,12 @@ const MySketch = ({ className, currentCharIndex = 0 }) => {
           <button className={STYLES.button} onClick={toggleAudio}>
             {audioAllowed ? <PauseIcon /> : <PlayIcon />}
           </button>
-          
+
           {/* 下载按钮仅在移动端显示 */}
           {isMobile && (
-          <button className={STYLES.button} onClick={saveCurrentCanvas}>
-            <DownloadIcon />
-          </button>
+            <button className={STYLES.button} onClick={saveCurrentCanvas}>
+              <DownloadIcon />
+            </button>
           )}
         </div>
       )}

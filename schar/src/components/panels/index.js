@@ -117,44 +117,44 @@ export const IntroContent = memo(({ language }) => {
   
   return (
     <div className='h-full bg-gray-200/30 backdrop-blur relative'>
-      <article id="introContent" className='prose max-w-none flex-1 p-8'>
-        <h2 className='custom-bg relative font-bold text-center inline-block rounded-full px-2'>
-          <span className='relative z-10'>
+    <article id="introContent" className='prose max-w-none flex-1 p-8'>
+      <h2 className='custom-bg relative font-bold text-center inline-block rounded-full px-2'>
+        <span className='relative z-10'>
             {content.title1}
-          </span>
-        </h2>
-        <p className='mt-4 text-sm text-justify leading-snug'>
+        </span>
+      </h2>
+      <p className='mt-4 text-sm text-justify leading-snug'>
           {content.description1}
-        </p>
-        <h2 className='custom-bg relative font-bold text-center inline-block rounded-full px-2 mt-4'>
+      </p>
+      <h2 className='custom-bg relative font-bold text-center inline-block rounded-full px-2 mt-4'>
           <span className='relative z-10'>{content.title2}</span>
-        </h2>
-        <p className='mt-4 text-sm text-justify '>
-          <em className='text-[#adadad]'>
+      </h2>
+      <p className='mt-4 text-sm text-justify '>
+        <em className='text-[#adadad]'>
             {content.description2}
-          </em>
-        </p>
-        <ul className='list-disc text-sm pl-6 space-y-2 max-w-2xl mx-auto'>
-          <br />
+        </em>
+      </p>
+      <ul className='list-disc text-sm pl-6 space-y-2 max-w-2xl mx-auto'>
+        <br />
           {content.steps.map((step, index) => (
             <li key={index}>{step}</li>
           ))}
-        </ul>
-        <h2 className='custom-bg relative font-bold text-center inline-block rounded-full px-2 mt-4'>
+      </ul>
+      <h2 className='custom-bg relative font-bold text-center inline-block rounded-full px-2 mt-4'>
           <span className='relative z-10'>{content.title3}</span>
-        </h2>
-        <p className='mt-4 text-sm text-justify leading-snug'>
-          <em className='text-[#adadad] '>
+      </h2>
+      <p className='mt-4 text-sm text-justify leading-snug'>
+        <em className='text-[#adadad] '>
             {content.description3}
-          </em>
-        </p>
-        <ul className='list-disc text-sm pl-6 space-y-2 max-w-2xl mx-auto'>
-          <br />
+        </em>
+      </p>
+      <ul className='list-disc text-sm pl-6 space-y-2 max-w-2xl mx-auto'>
+        <br />
           {content.innovations.map((innovation, index) => (
             <li key={index}>{innovation}</li>
           ))}
-        </ul>
-      </article>
+      </ul>
+    </article>
     </div>
   )
 }) 
