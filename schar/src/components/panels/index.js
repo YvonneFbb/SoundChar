@@ -1,5 +1,6 @@
 import { memo } from 'react'
 import { STYLES, ANIMATION_CONFIG, NAV_ITEMS } from '@/constants'
+import { INTRO_CONTENT } from '@/constants/introContent'
 
 // 引用面板组件
 export const ReferencePanel = memo(({ showReference, onClose }) => {
@@ -111,63 +112,47 @@ export const DesktopNavigationPanel = memo(({ showNavigation, onClose, onNavItem
 })
 
 // 介绍内容组件
-export const IntroContent = memo(() => {
+export const IntroContent = memo(({ language }) => {
+  const content = INTRO_CONTENT[language]
+  
   return (
-    <div className='h-full bg-gray-200/30 backdrop-blur'>
+    <div className='h-full bg-gray-200/30 backdrop-blur relative'>
       <article id="introContent" className='prose max-w-none flex-1 p-8'>
         <h2 className='custom-bg relative font-bold text-center inline-block rounded-full px-2'>
           <span className='relative z-10'>
-            Early Chinese Characters in Sound Visualization
+            {content.title1}
           </span>
         </h2>
         <p className='mt-4 text-sm text-justify leading-snug'>
-          Based on the logic of early Chinese character creation, this study
-          proposes a "shape, meaning, and sound" reconstruction method,
-          aiming to explore new possibilities of symbol design through the
-          comprehensive construction of shape (visual structure), meaning
-          (symbolic semantics), and sound (sound). Therefore, during the
-          symbol application practice stage, this study paid special
-          attention to the dynamics, multi-sensory expression and
-          cross-media adaptability of the symbol system, in order to
-          construct an innovative design concept that is consistent with the
-          traditional Chinese character creation logic and adaptable to
-          modern symbol systems.
+          {content.description1}
         </p>
         <h2 className='custom-bg relative font-bold text-center inline-block rounded-full px-2 mt-4'>
-          <span className='relative z-10'>Operation and Gameplay</span>
+          <span className='relative z-10'>{content.title2}</span>
         </h2>
         <p className='mt-4 text-sm text-justify '>
           <em className='text-[#adadad]'>
-            This is a step-by-step operation guide and notes:
+            {content.description2}
           </em>
         </p>
         <ul className='list-disc text-sm pl-6 space-y-2 max-w-2xl mx-auto'>
           <br />
-          <li>Step 1: Click the Start button and tell the computer any sound you want to make</li>
-          <li>Step 2: Observe how the symbol changes based on the sound input</li>
-          <li>Step 3: You can select the switch button to switch between different symbols for interaction</li>
-          <li>Note: You can choose to press the Pause button to stop the interaction</li>
+          {content.steps.map((step, index) => (
+            <li key={index}>{step}</li>
+          ))}
         </ul>
         <h2 className='custom-bg relative font-bold text-center inline-block rounded-full px-2 mt-4'>
-          <span className='relative z-10'>Innovation</span>
+          <span className='relative z-10'>{content.title3}</span>
         </h2>
         <p className='mt-4 text-sm text-justify leading-snug'>
           <em className='text-[#adadad] '>
-            This study proposes an innovative "shape, meaning and sound"
-            reconstruction method based on the combination of traditional
-            Chinese character creation logic and modern graphic symbol
-            design, realizing the digital, systematized and visualized
-            expression of Chinese character cultural elements. Explore the
-            mapping relationship between sound and graphic symbols, and
-            propose a symbol visualization method based on phonological
-            features.
+            {content.description3}
           </em>
         </p>
         <ul className='list-disc text-sm pl-6 space-y-2 max-w-2xl mx-auto'>
           <br />
-          <li>A method of "shape, meaning and sound" reconstruction is proposed to achieve multimodal fusion of Chinese characters.</li>
-          <li>Construct a "shape, meaning and sound" digital symbol library and explore real-time symbol generation based on parameterization.</li>
-          <li>Explore the mapping relationship between sound and graphic symbols, and propose a symbol visualization method based on phonological features.</li>
+          {content.innovations.map((innovation, index) => (
+            <li key={index}>{innovation}</li>
+          ))}
         </ul>
       </article>
     </div>

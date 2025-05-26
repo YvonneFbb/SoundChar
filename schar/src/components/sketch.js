@@ -248,9 +248,16 @@ const MySketch = ({ className, currentCharIndex = 0 }) => {
 
       {/* 字符名称显示 */}
       {!isLoading && (
-        <p className={`${STYLES.centerText} text-xl md:text-2xl font-bold top-16 md:top-20 z-10 ${STYLES.songFont}`}>
-          {charData[globalInt].name}
-        </p>
+        <div className={`${STYLES.centerText} top-16 md:top-20 z-10 ${STYLES.songFont} text-center`}>
+          <p className="text-xl md:text-2xl font-bold mb-1">
+            {charData[globalInt].name}
+          </p>
+          {charData[globalInt].pinyin && (
+            <p className="text-sm md:text-base text-gray-600 font-bold">
+              {charData[globalInt].pinyin}
+            </p>
+          )}
+        </div>
       )}
 
       {/* 调试控件 */}
@@ -310,9 +317,9 @@ const MySketch = ({ className, currentCharIndex = 0 }) => {
           
           {/* 下载按钮仅在移动端显示 */}
           {isMobile && (
-            <button className={STYLES.button} onClick={saveCurrentCanvas}>
-              <DownloadIcon />
-            </button>
+          <button className={STYLES.button} onClick={saveCurrentCanvas}>
+            <DownloadIcon />
+          </button>
           )}
         </div>
       )}

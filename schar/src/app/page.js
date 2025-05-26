@@ -19,6 +19,7 @@ export default function Home() {
   const [showNavigation, setShowNavigation] = useState(false)
   const [showDesktopNavigation, setShowDesktopNavigation] = useState(false)
   const [currentCharIndex, setCurrentCharIndex] = useState(0)
+  const [language, setLanguage] = useState('en')
   
   const isMobile = useMobile()
 
@@ -45,6 +46,10 @@ export default function Home() {
     setShowDesktopNavigation(false)
   }, [])
 
+  const toggleLanguage = useCallback(() => {
+    setLanguage(prev => prev === 'en' ? 'cn' : 'en')
+  }, [])
+
   // 移动设备检测和内容克隆
   useEffect(() => {
     const updateIntroState = () => {
@@ -61,11 +66,15 @@ export default function Home() {
 
   useEffect(() => {
     const cloneContentIfNeeded = () => {
-      if (isMobile && !contentCloned) {
+      if (isMobile) {
         const sourceContent = document.getElementById('introContent')
         const targetContent = document.getElementById('mobileIntroContent')
 
-        if (sourceContent && targetContent && !targetContent.hasChildNodes()) {
+        if (sourceContent && targetContent) {
+          // 清空目标内容
+          targetContent.innerHTML = ''
+          
+          // 克隆新内容
           const fragment = document.createDocumentFragment()
           Array.from(sourceContent.childNodes).forEach(node => {
             fragment.appendChild(node.cloneNode(true))
@@ -80,7 +89,7 @@ export default function Home() {
       const timer = setTimeout(cloneContentIfNeeded, 100)
       return () => clearTimeout(timer)
     }
-  }, [isMobile, contentCloned])
+  }, [isMobile, contentCloned, language])
 
   // 移动端介绍面板
   const mobileIntroPanel = useMemo(() => {
@@ -95,12 +104,20 @@ export default function Home() {
       >
         <div className='sticky top-0 left-0 right-0 h-16 flex items-center justify-between px-4'>
           <h2 className='text-lg font-black text-[#0c75ff]'>Introduction</h2>
-          <button
-            onClick={toggleIntro}
-            className='text-4xl leading-none text-[#0c75ff] transition-colors'
-          >
-            &times;
-          </button>
+          <div className='flex items-center gap-3'>
+            <button
+              onClick={toggleLanguage}
+              className='text-sm font-medium text-[#0c75ff] underline'
+            >
+              {language === 'en' ? 'CN' : 'EN'}
+            </button>
+            <button
+              onClick={toggleIntro}
+              className='text-4xl leading-none text-[#0c75ff] transition-colors'
+            >
+              &times;
+            </button>
+          </div>
         </div>
         <div className='overflow-y-auto no-scrollbar h-[calc(100%-4rem)]'>
           <div id="mobileIntroContent" className='px-4 mobile-content'>
@@ -128,7 +145,7 @@ export default function Home() {
         </div>
       </div>
     )
-  }, [isMobile, showIntro, toggleIntro])
+  }, [isMobile, showIntro, toggleIntro, language, toggleLanguage])
 
   // 主内容区域
   const mainContent = useMemo(() => {
@@ -136,7 +153,7 @@ export default function Home() {
       <div className='flex flex-col md:flex-row flex-1 overflow-hidden'>
         {/* PC端介绍内容容器 */}
         <div className={`w-full md:w-1/3 overflow-y-scroll custom-scrollbar ${isMobile ? 'hidden' : 'block'}`}>
-          <IntroContent />
+          <IntroContent language={language} />
         </div>
 
         {/* 画布容器 */}
@@ -166,7 +183,7 @@ export default function Home() {
         )}
       </div>
     )
-  }, [isMobile, showReference, toggleReference, showDesktopNavigation, toggleDesktopNavigation, mobileIntroPanel, showNavigation, toggleNavigation, handleNavItemClick, currentCharIndex])
+  }, [isMobile, showReference, toggleReference, showDesktopNavigation, toggleDesktopNavigation, mobileIntroPanel, showNavigation, toggleNavigation, handleNavItemClick, currentCharIndex, language])
 
   return (
     <div className='flex flex-col h-screen overflow-hidden'>
@@ -175,6 +192,8 @@ export default function Home() {
         <Header 
           onReferenceClick={toggleReference} 
           onNavigationClick={toggleDesktopNavigation}
+          language={language}
+          onLanguageToggle={toggleLanguage}
         />
       )}
 

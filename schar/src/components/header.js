@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import { GridButton } from '@/components/icons'
 
-export default function Header ({ onReferenceClick, onNavigationClick }) {
+export default function Header ({ onReferenceClick, onNavigationClick, language, onLanguageToggle }) {
   return (
     <header
       className='border-b border-black sticky top-0 bg-white z-10'
@@ -25,9 +25,14 @@ export default function Header ({ onReferenceClick, onNavigationClick }) {
         {/* 右侧按钮 */}
         <div className='flex items-center gap-4 px-4'>
           <button className='flex px-2 justify-end' onClick={onReferenceClick}>
-            <a href='#reference' className='text-black-600 transition-colors underline'>
-              Reference
-            </a>
+            <span className='text-black-600 transition-colors underline'>
+            Reference
+          </span>
+        </button>
+          <button className='flex px-2 justify-end' onClick={onLanguageToggle}>
+            <span className='text-black-600 transition-colors underline'>
+              {language === 'en' ? 'CN' : 'EN'}
+            </span>
           </button>
           <GridButton 
             onClick={onNavigationClick}

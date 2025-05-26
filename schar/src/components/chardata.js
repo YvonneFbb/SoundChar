@@ -458,8 +458,9 @@ class CharCompo {
 }
 
 class Character {
-    constructor(name, components, size) {
+    constructor(name, components, size, pinyin = '') {
         this.name = name;
+        this.pinyin = pinyin;
         this.components = components;
         this.size = size;
         this.initialized = false;
@@ -714,7 +715,8 @@ let qiData = new Character(
             CharType.BLOCK_W,
         )
     ],
-    [10, 10]
+    [10, 10],
+    "qì"
 )
 
 let yueData = new Character(
@@ -760,7 +762,8 @@ let yueData = new Character(
             CharType.ARC,
         )
     ],
-    [7, 12]
+    [7, 12],
+    "yuè"
 )
 
 let jinData = new Character(
@@ -891,7 +894,8 @@ let jinData = new Character(
             CharType.BLOCK_W,
         ),
     ],
-    [8, 13]
+    [8, 13],
+    "jīn"
 )
 
 let huoData = new Character(
@@ -929,7 +933,8 @@ let huoData = new Character(
             CharType.ARC,
         )
     ],
-    [12, 8]
+    [12, 8],
+    "huǒ"
 )
 
 let muData = new Character(
@@ -996,7 +1001,8 @@ let muData = new Character(
             CharType.BLOCK_W,
         ),
     ],
-    [8, 12]
+    [8, 12],
+    "mù"
 )
 
 let shuiData = new Character(
@@ -1064,7 +1070,8 @@ let shuiData = new Character(
             CharType.POLYLINE,
         ),
     ],
-    [6, 12]
+    [6, 12],
+    "shuǐ"
 )
 
 let tuData = new Character(
@@ -1098,7 +1105,8 @@ let tuData = new Character(
             CharType.CIRCLE,
         )
     ],
-    [12, 6]
+    [12, 6],
+    "tǔ"
 )
 
 let gongData = new Character(
@@ -1148,7 +1156,8 @@ let gongData = new Character(
             CharType.CIRCLE,
         )
     ],
-    [8, 12]
+    [8, 12],
+    "gōng"
 )
 
 let riData = new Character(
@@ -1177,7 +1186,8 @@ let riData = new Character(
             CharType.CIRCLE,
         ),
     ],
-    [12, 12]
+    [12, 12],
+    "rì"
 )
 
 let banData = new Character(
@@ -1249,7 +1259,8 @@ let banData = new Character(
             CharType.BLOCK_W,
         ),
     ],
-    [6, 12]
+    [6, 12],
+    "bàn"
 )
 
 let yanData = new Character(
@@ -1343,7 +1354,8 @@ let yanData = new Character(
             CharType.CIRCLE,
         ),
     ],
-    [6, 12]
+    [6, 12],
+    "yán"
 )
 
 let caoData = new Character(
@@ -1400,7 +1412,8 @@ let caoData = new Character(
             CharType.BLOCK_W_MID,
         ),
     ],
-    [6, 12]
+    [6, 12],
+    "cǎo"
 )
 
 let shiData = new Character(
@@ -1444,7 +1457,8 @@ let shiData = new Character(
             CharType.CIRCLE,
         ),
     ],
-    [8, 12]
+    [8, 12],
+    "shí"
 )
 
 let mu2Data = new Character(
@@ -1487,7 +1501,8 @@ let mu2Data = new Character(
         ),
 
     ],
-    [10, 6]
+    [10, 6],
+    "mù"
 )
 
 let yiData = new Character(
@@ -1572,7 +1587,8 @@ let yiData = new Character(
             CharType.BLOCK_W,
         )
     ],
-    [7, 12]
+    [7, 12],
+    "yī"
 )
 
 let kouData = new Character(
@@ -1608,7 +1624,8 @@ let kouData = new Character(
             CharType.ARC,
         )
     ],
-    [12, 9]
+    [12, 9],
+    "kǒu"
 )
 
 let chongData = new Character(
@@ -1655,7 +1672,8 @@ let chongData = new Character(
             CharType.POLYLINE,
         )
     ],
-    [5, 13]
+    [5, 13],
+    "chóng"
 )
 
 let fuData = new Character(
@@ -1729,7 +1747,8 @@ let fuData = new Character(
             CharType.BLOCK_W,
         )
     ],
-    [5, 12]
+    [5, 12],
+    "fù"
 )
 
 let xinData = new Character(
@@ -1838,7 +1857,8 @@ let xinData = new Character(
             CharType.BLOCK_W_MID,
         ),
     ],
-    [12, 10]
+    [12, 10],
+    "xīn"
 )
 
 let baoData = new Character(
@@ -1910,7 +1930,8 @@ let baoData = new Character(
             CharType.BLOCK_W,
         ),
     ],
-    [6, 13]
+    [6, 13],
+    "bāo"
 )
 
 let renData = new Character(
@@ -1982,7 +2003,8 @@ let renData = new Character(
             CharType.BLOCK_W,
         ),
     ],
-    [6, 13]
+    [6, 13],
+    "rén"
 )
 
 
@@ -2081,7 +2103,8 @@ let yuData = new Character(
             CharType.BLOCK_W_MID,
         ),
     ],
-    [8, 10]
+    [8, 10],
+    "yǔ"
 )
 
 let jin2Data = new Character(
@@ -2130,7 +2153,8 @@ let jin2Data = new Character(
             CharType.POLYLINE,
         ),
     ],
-    [8, 10]
+    [8, 10],
+    "jīn"
 )
 let zuData = new Character(
     "足",
@@ -2219,7 +2243,8 @@ let zuData = new Character(
             CharType.ARC,
         ),
     ],
-    [8, 12]
+    [8, 12],
+    "zú"
 )
 
 let chuoData = new Character(
@@ -2288,7 +2313,8 @@ let chuoData = new Character(
             CharType.BLOCK_W_MID,
         ),
     ],
-    [10, 12]
+    [10, 12],
+    "chuò"
 )
 
 let mianData = new Character(
@@ -2339,7 +2365,8 @@ let mianData = new Character(
             CharType.BLOCK_W,
         ),
     ],
-    [10, 12]
+    [10, 12],
+    "mián"
 )
 
 let yangData = new Character(
@@ -2451,7 +2478,8 @@ let yangData = new Character(
             CharType.BLOCK_W,
         ),
     ],
-    [7, 12]
+    [7, 12],
+    "yāng"
 )
 
 let weiData = new Character(
@@ -2537,7 +2565,8 @@ let weiData = new Character(
             CharType.BLOCK_W,
         ),
     ],
-    [6, 12]
+    [6, 12],
+    "wèi"
 )
 
 
